@@ -501,10 +501,6 @@ body{font-family:'DM Sans',system-ui,sans-serif;min-height:100%;padding-bottom:9
 .import-actions{display:flex;gap:10px;margin-top:16px;align-items:center}
 .import-actions .import-action-btn{flex:1}
 
-.lang-toggle{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--off);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--ink3);cursor:pointer;transition:all .15s;flex-shrink:0;letter-spacing:0;padding:0}
-.lang-toggle:hover{border-color:var(--ink);color:var(--ink)}
-[data-theme="dmea"] .lang-toggle{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7)}
-[data-theme="dmea"] .lang-toggle:hover{background:rgba(255,255,255,.2);color:white}
 /* ── Card editor ──────────────────────────────────────────────────── */
 .card-add-btn{width:100%;padding:13px;border-radius:var(--radius-sm);border:1.5px dashed var(--border2);background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--ink3);cursor:pointer;margin-bottom:12px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
 .card-add-btn:hover{border-color:var(--ink);color:var(--ink);background:var(--off)}
@@ -631,7 +627,6 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
         <button class="theme-btn" id="theme-btn-light" onclick="setTheme('light')" title="Light">☀️</button>
         <button class="theme-btn" id="theme-btn-dmea"  onclick="setTheme('dmea')"  title="DMEA">⚡</button>
         <button class="theme-btn" id="theme-btn-dark"  onclick="setTheme('dark')"  title="Dark">🌙</button>
-        <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()" title="Switch language">EN</button>
       </div>
     </div>
   </div>
@@ -1472,7 +1467,6 @@ function goTo(screen, btn){
   if(screen==='assets') renderAssetsTab();
   if(screen==='planner') renderPlanner();
   if(screen==='cashflow') renderCashFlow();
-  if(currentLang === 'es') setTimeout(translatePage, 30);
 }
 
 function renderAll(){
@@ -1523,7 +1517,7 @@ function setType(typ){
   // Save button
   const sb = document.getElementById('save-btn');
   sb.className = 'save-btn '+(isInc?'inc':'exp');
-  sb.textContent = isExp?t('save_expense'):isInc?t('save_income'):isCC?t('save_cc_purchase'):t('save_cc_payment');
+  sb.textContent = isExp?"Save Expense":isInc?"Save Income":isCC?"Save CC Purchase":"Save CC Payment";
 
   // Category defaults
   const catEl = document.getElementById('new-cat');
@@ -1593,7 +1587,7 @@ function renderHome(){
   // Hero
   const hr = now.getHours();
   const name = getUserName() ? ', '+getUserName() : '';
-  const greeting = hr<12 ? t('good_morning') : hr<17 ? t('good_afternoon') : t('good_evening');
+  const greeting = hr<12 ? "Good morning" : hr<17 ? "Good afternoon" : "Good evening";
   document.getElementById('hero-greeting').textContent = greeting + name;
   document.getElementById('hero-net').textContent = fmt(net);
   document.getElementById('hero-sub').textContent = MONTHS_STR[now.getMonth()]+' net · '+(net>=0?'Ahead ✓':'Over budget ⚠');
@@ -1656,17 +1650,17 @@ function renderHome(){
     <div class="stat-card green">
       <div class="stat-label">Income</div>
       <div class="stat-value pos">${fmtShort(inc)}</div>
-      <div class="stat-sub">${me.filter(e=>e.type==='income').length} ${t('paychecks')}</div>
+      <div class="stat-sub">${me.filter(e=>e.type==='income').length} ${"paychecks"}</div>
     </div>
     <div class="stat-card red">
       <div class="stat-label">Expenses</div>
       <div class="stat-value neg">${fmtShort(exp)}</div>
-      <div class="stat-sub">${me.filter(e=>e.type==='expense').length} ${t('entries')}</div>
+      <div class="stat-sub">${me.filter(e=>e.type==='expense').length} ${"entries"}</div>
     </div>
     <div class="stat-card full ${net>=0?'green':'red'}">
       <div class="stat-label">Net remaining</div>
       <div class="stat-value ${net>=0?'pos':'neg'}">${fmt(net)}</div>
-      <div class="stat-sub">${net>=0?t('ahead'):t('behind')}</div>
+      <div class="stat-sub">${net>=0?"You're ahead this month":"You're behind this month"}</div>
     </div>`;
 
   // ── Net worth snapshot (includes assets) ────────────────────────────────────
@@ -1678,17 +1672,17 @@ function renderHome(){
   document.getElementById('home-networth').innerHTML=`
     <div class="dash-card">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div class="debt-stat"><div class="debt-stat-label">🏦 ${t('checking')}</div><div class="debt-stat-val" style="color:var(--green)">${fmt(chkBal)}</div></div>
-        <div class="debt-stat"><div class="debt-stat-label">💵 ${t('savings_account')||'Savings'}</div><div class="debt-stat-val" style="color:var(--blue)">${fmt(savingsData.bal||0)}</div></div>
-        <div class="debt-stat"><div class="debt-stat-label">📦 ${t('assets')}</div><div class="debt-stat-val" style="color:#b8860b">${fmt(av.total)}</div></div>
-        <div class="debt-stat"><div class="debt-stat-label">💳 ${t('cc_debt')}</div><div class="debt-stat-val red">${fmt(totalDebt)}</div></div>
+        <div class="debt-stat"><div class="debt-stat-label">🏦 ${"Checking"}</div><div class="debt-stat-val" style="color:var(--green)">${fmt(chkBal)}</div></div>
+        <div class="debt-stat"><div class="debt-stat-label">💵 ${"Savings account"||'Savings'}</div><div class="debt-stat-val" style="color:var(--blue)">${fmt(savingsData.bal||0)}</div></div>
+        <div class="debt-stat"><div class="debt-stat-label">📦 ${"Assets"}</div><div class="debt-stat-val" style="color:#b8860b">${fmt(av.total)}</div></div>
+        <div class="debt-stat"><div class="debt-stat-label">💳 ${"CC Debt"}</div><div class="debt-stat-val red">${fmt(totalDebt)}</div></div>
       </div>
       <div style="background:var(--off);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;font-weight:600;color:var(--ink2)">💰 ${t('total_assets')}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--ink2)">💰 ${"Total assets"}</span>
         <span style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green)">${fmt(totalAssets)}</span>
       </div>
       <div style="background:${netWorth>=0?'var(--green-bg)':'var(--red-bg)'};border:1px solid ${netWorth>=0?'var(--green-mid)':'var(--red-mid)'};border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;font-weight:600;color:${netWorth>=0?'var(--green)':'var(--red)'}">${t('net_worth')}</span>
+        <span style="font-size:13px;font-weight:600;color:${netWorth>=0?'var(--green)':'var(--red)'}">${"Net worth"}</span>
         <span style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${netWorth>=0?'var(--green)':'var(--red)'};letter-spacing:-.02em">${fmt(netWorth)}</span>
       </div>
     </div>`;
@@ -1721,7 +1715,7 @@ function renderHome(){
       const pc = chk.projected<500?'var(--red)':chk.projected<1500?'var(--amber)':'var(--green)';
       chkEl.innerHTML=`
         <div>
-          <div class="chk-pill-label">🏦 ${t('checking_account')}</div>
+          <div class="chk-pill-label">🏦 ${"Checking account"}</div>
           <div class="chk-pill-bal">${fmt(chk.startBal)}</div>
           <div class="chk-pill-sub">Current balance · tap to update</div>
         </div>
@@ -1731,7 +1725,7 @@ function renderHome(){
           <div class="chk-stat"><div class="chk-stat-val" style="color:${pc}">${fmt(chk.projected)}</div><div class="chk-stat-label">projected</div></div>
         </div>`;
     } else {
-      chkEl.innerHTML=`<div><div class="chk-pill-label">🏦 ${t('checking_account')}</div><div style="font-size:14px;font-weight:500;color:var(--green);margin-top:4px">${t('tap_add_balance')}</div></div><div style="font-size:20px;color:var(--green)">›</div>`;
+      chkEl.innerHTML=`<div><div class="chk-pill-label">🏦 ${"Checking account"}</div><div style="font-size:14px;font-weight:500;color:var(--green);margin-top:4px">${"Tap to add your current balance"}</div></div><div style="font-size:20px;color:var(--green)">›</div>`;
     }
     chkEl.style.display='flex';
   }
@@ -1740,13 +1734,13 @@ function renderHome(){
     if(savingsData.bal > 0){
       savEl.innerHTML = `
         <div>
-          <div class="chk-pill-label">💰 ${t('savings_account')||'Savings account'}</div>
+          <div class="chk-pill-label">💰 ${"Savings account"||'Savings account'}</div>
           <div class="chk-pill-bal">${fmt(savingsData.bal)}</div>
-          <div class="chk-pill-sub">${t('tap_update')}</div>
+          <div class="chk-pill-sub">${"tap to update"}</div>
         </div>
         <div style="font-size:20px;color:var(--blue)">›</div>`;
     } else {
-      savEl.innerHTML = `<div><div class="chk-pill-label">💰 ${t('savings_account')||'Savings account'}</div><div style="font-size:14px;font-weight:500;color:var(--blue);margin-top:4px">${t('tap_add_savings')||'Tap to add your savings balance'}</div></div><div style="font-size:20px;color:var(--blue)">›</div>`;
+      savEl.innerHTML = `<div><div class="chk-pill-label">💰 ${"Savings account"||'Savings account'}</div><div style="font-size:14px;font-weight:500;color:var(--blue);margin-top:4px">${"Tap to add your savings balance"||'Tap to add your savings balance'}</div></div><div style="font-size:20px;color:var(--blue)">›</div>`;
     }
     savEl.style.display = 'flex';
   }
@@ -1810,7 +1804,7 @@ function renderHome(){
             <div class="bar-val">${fmt(amt)}</div>
           </div>`).join('')}
       </div>
-    </div>`:`<div style="font-size:13px;color:var(--ink3);padding:8px 0">${currentLang==='es'?'Sin gastos este mes':'No expenses yet this month'}</div>`;
+    </div>`:`<div style="font-size:13px;color:var(--ink3);padding:8px 0">No expenses yet this month</div>`;
 
   // ── Bills due soon ────────────────────────────────────────────────────────────
   const today=now.getDate();
@@ -1829,16 +1823,15 @@ function renderHome(){
         <div class="bill-amt">${fmt(b.amt)}</div>
       </div>`;
     }).join('')
-    :`<div style="font-size:13px;color:var(--ink3);padding:8px 0">${t('no_bills')}</div>`;
+    :`<div style="font-size:13px;color:var(--ink3);padding:8px 0">${"No bills due in the next 10 days"}</div>`;
 
   // ── Recent tx ─────────────────────────────────────────────────────────────────
   const recent=[...entries].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
   document.getElementById('home-tx').innerHTML=recent.length
     ?recent.map(e=>txRow(e,false)).join('')
-    :`<div class="empty"><div class="empty-icon">📭</div><div class="empty-msg">${t('no_tx')}</div></div>`;
+    :`<div class="empty"><div class="empty-icon">📭</div><div class="empty-msg">${"No entries yet — use Import to load your bank CSV"}</div></div>`;
 
   renderHowTo();
-  if(currentLang === 'es') translatePage();
 }
 
 
@@ -1848,15 +1841,15 @@ function renderHowTo(){
   const dismissed = localStorage.getItem('ledger_howto_dismissed');
   if(dismissed){
     el.innerHTML = `<div style="text-align:center;padding:8px 0">
-      <button onclick="showHowTo()" style="background:none;border:none;font-size:12px;color:var(--ink3);cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline">${t('howto_title')} ↗</button>
+      <button onclick="showHowTo()" style="background:none;border:none;font-size:12px;color:var(--ink3);cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline">${"How to get started"} ↗</button>
     </div>`;
     return;
   }
-  const steps = T[currentLang]?.howto_steps || T.en.howto_steps;
+  const steps = T.en.howto_steps;
   el.innerHTML = `
     <div class="howto-card">
       <div class="howto-header">
-        <div class="howto-title">💡 ${t('howto_title')}</div>
+        <div class="howto-title">💡 ${"How to get started"}</div>
       </div>
       ${steps.map(s=>`
         <div class="howto-step">
@@ -1866,7 +1859,7 @@ function renderHowTo(){
             <div class="howto-step-body">${s.body}</div>
           </div>
         </div>`).join('')}
-      <button class="howto-dismiss-btn" onclick="dismissHowTo()">✓ ${t('howto_dismiss')}</button>
+      <button class="howto-dismiss-btn" onclick="dismissHowTo()">✓ ${"Got it"}</button>
     </div>`;
 }
 
@@ -1891,7 +1884,7 @@ function renderEntries(){
   const keys = [...new Set(entries.map(e=>monthKey(e.date)))].sort().reverse();
   const sel  = document.getElementById('entries-month-filter');
   const prev = sel.value;
-  sel.innerHTML = `<option value="all">${t('all_months')}</option>`+keys.map(k=>`<option value="${k}"${k===prev?' selected':''}>${monthLabel(k)}</option>`).join('');
+  sel.innerHTML = `<option value="all">${"All months"}</option>`+keys.map(k=>`<option value="${k}"${k===prev?' selected':''}>${monthLabel(k)}</option>`).join('');
 
   const mf      = sel.value;
   const tf      = document.getElementById('entries-type-filter').value;
@@ -1922,8 +1915,7 @@ function renderEntries(){
 
   document.getElementById('entries-list').innerHTML = list.length
     ? list.map(e=>txRow(e, true, query)).join('')
-    : `<div class="empty"><div class="empty-icon">${query?'🔍':'📭'}</div><div class="empty-msg">${query?(currentLang==='es'?'Sin coincidencias para "'+query+'"':'No entries match "'+query+'"'):t('no_entries')}</div></div>`;
-  if(currentLang === 'es') translatePage();
+    : `<div class="empty"><div class="empty-icon">${query?'🔍':'📭'}</div><div class="empty-msg">${query?'No entries match "'+query+'"':"No entries found"}</div></div>`;
 }
 
 function clearSearch(){
@@ -2181,7 +2173,7 @@ function renderBills(){
   const fullTotal    = BILLS.reduce((s,b)=>s+b.amt,0);
 
   const rows = !BILLS.length && !query
-    ? `<div class="empty"><div class="empty-icon">📋</div><div class="empty-msg">${t('no_bills_yet')}</div></div>`
+    ? `<div class="empty"><div class="empty-icon">📋</div><div class="empty-msg">${"No bills yet — tap \"Add a bill\" to get started"}</div></div>`
     : filtered.length
     ? filtered.map((b,fi)=>{
         const realIdx = BILLS.indexOf(b);
@@ -2204,8 +2196,8 @@ function renderBills(){
             <div class="bill-amt">${fmt(b.amt)}</div>
           </div>
           <div class="bill-edit-row">
-            <button class="bill-edit-btn" onclick="openBillSheet(${realIdx})">${t('edit')}</button>
-            <button class="bill-edit-btn del" onclick="deleteBill(${realIdx})">${t('delete_btn')}</button>
+            <button class="bill-edit-btn" onclick="openBillSheet(${realIdx})">${"Edit"}</button>
+            <button class="bill-edit-btn del" onclick="deleteBill(${realIdx})">${"Delete"}</button>
           </div>
         </div>`;
       }).join('')
@@ -2836,58 +2828,8 @@ const T = {
 
 function t(key){ return (T[currentLang] && T[currentLang][key]) || T.en[key] || key; }
 
-function toggleLang(){
-  currentLang = currentLang === 'en' ? 'es' : 'en';
-  localStorage.setItem(LANG_KEY, currentLang);
-  document.getElementById('lang-toggle').textContent = currentLang === 'en' ? 'EN' : 'ES';
-  applyLangToNav();
-  renderAll();
-  setTimeout(translatePage, 50);
-}
-
-function setWelcomeLang(){
-  currentLang = currentLang === 'en' ? 'es' : 'en';
-  localStorage.setItem(LANG_KEY, currentLang);
-  const isEs = currentLang === 'es';
-  document.getElementById('welcome-title').textContent = isEs ? 'Bienvenido a Ledger' : 'Welcome to Ledger';
-  document.getElementById('welcome-sub').textContent   = isEs
-    ? 'Una app de finanzas personales diseñada para el cheque quincenal. Empecemos con tu nombre.'
-    : 'A personal finance app built around the bi-weekly paycheck. Let\'s start by getting your name.';
-  document.getElementById('welcome-btn').textContent  = isEs ? 'Comenzar →' : 'Get started →';
-  document.getElementById('welcome-skip').textContent = isEs ? 'Omitir por ahora' : 'Skip for now';
-  document.getElementById('welcome-lang-btn').textContent = isEs ? '🌐 English' : '🌐 Español';
-  document.getElementById('welcome-name-input').placeholder = isEs ? 'Tu nombre' : 'Your first name / Tu nombre';
-  const btn = document.getElementById('lang-toggle');
-  if(btn) btn.textContent = isEs ? 'ES' : 'EN';
-}
-
 function initLang(){
-  currentLang = localStorage.getItem(LANG_KEY) || 'en';
-  const btn = document.getElementById('lang-toggle');
-  if(btn) btn.textContent = currentLang === 'en' ? 'EN' : 'ES';
-  applyLangToNav();
-}
-
-function applyLangToNav(){
-  const navMap={home:'nav_home',entries:'nav_entries',cards:'nav_cards',assets:'nav_assets',planner:'nav_planner',cashflow:'nav_flow',import:'nav_import'};
-  document.querySelectorAll('.nav-btn').forEach(btn=>{
-    const fn=btn.getAttribute('onclick')||'';const m=fn.match(/goTo\('(\w+)'/);
-    if(m&&navMap[m[1]]){const svg=btn.querySelector('svg');btn.textContent=t(navMap[m[1]]);if(svg)btn.prepend(svg);}
-  });
-  const set=(id,key)=>{const el=document.getElementById(id);if(el)el.textContent=t(key);};
-  const setQ=(q,key)=>{const el=document.querySelector(q);if(el)el.textContent=t(key);};
-  const setP=(q,key)=>{const el=document.querySelector(q);if(el)el.placeholder=t(key);};
-  set('bills-due-label','bills_due'); set('recent-tx-label','recent_tx');
-  set('suggest-pill','suggest_pill');
-  setQ('.import-reminder-title','import_reminder_title');
-  const addCardBtn=document.querySelector('.card-add-btn');if(addCardBtn){const svg=addCardBtn.querySelector('svg');addCardBtn.textContent=t('add_card');if(svg)addCardBtn.prepend(svg);}
-  const addBillBtn=document.querySelector('.bill-add-btn');if(addBillBtn){const svg=addBillBtn.querySelector('svg');addBillBtn.textContent=t('add_bill');if(svg)addBillBtn.prepend(svg);}
-  const at=document.getElementById('planner-tab-aval');if(at)at.innerHTML=`⚡ ${t('avalanche')}<br><span style="font-size:10px;font-weight:400">${t('highest_apr')}</span>`;
-  const st=document.getElementById('planner-tab-snow');if(st)st.innerHTML=`❄ ${t('snowball')}<br><span style="font-size:10px;font-weight:400">${t('lowest_bal')}</span>`;
-  setQ('#name-sheet .sheet-title','update_name');
-  setQ('#assets-sheet button[onclick="saveAssets()"]','save_assets');
-  setQ('#bill-sheet button[onclick="saveBillFromSheet()"]','save_bill');
-  renderHowTo();
+  currentLang = 'en';
 }
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
@@ -3011,7 +2953,6 @@ function initImport(){
   initCCUpload();
   populateCCCardSelect();
   renderImportLastUploaded();
-  if(currentLang === 'es') translatePage();
 }
 
 function handleFile(file){
@@ -3176,7 +3117,7 @@ async function confirmImport(){
   const toImport = importParsed.filter(r=>r.include);
   if(!toImport.length){ showToast('Nothing selected to import'); return; }
   const btn = document.getElementById('import-confirm-btn');
-  btn.disabled=true; btn.textContent=t('saving');
+  btn.disabled=true; btn.textContent="Saving…";
   setSyncDot('syncing');
 
   const toRow = row => ({
@@ -3196,7 +3137,7 @@ async function confirmImport(){
       const {error} = await db.from('entries').insert([row]);
       if(error){ failed++; }
       else { entries.unshift(row); saved++; }
-      if(saved%5===0) btn.textContent=t('saving')+' '+saved+'/'+toImport.length;
+      if(saved%5===0) btn.textContent="Saving…"+' '+saved+'/'+toImport.length;
     } catch(e){ failed++; }
   }
   cacheLocal();
@@ -3222,7 +3163,7 @@ async function confirmImport(){
   }
 
   document.getElementById('import-done-title').textContent = saved + (failed>0 ? ' imported, '+failed+' skipped' : ' entries imported');
-  document.getElementById('import-done-sub').textContent = (failed>0 ? 'Some rows failed — check console' : t('all_done')) + balanceMsg;
+  document.getElementById('import-done-sub').textContent = (failed>0 ? 'Some rows failed — check console' : "All done — check Entries and Analytics.") + balanceMsg;
   showImportStep(4);
   renderAll();
 }
@@ -3268,7 +3209,6 @@ function setImportSource(src){
     title.textContent = 'Import from bank';
     sub.textContent   = "Download a CSV from your bank's website and drop it here.";
   }
-  if(currentLang === 'es') translatePage();
 }
 
 // ── Credit Card CSV Import ────────────────────────────────────────────────────
@@ -4343,7 +4283,7 @@ async function savePaystub(){
   if(net<=0){ showToast('Enter gross pay and deductions, or net pay directly'); return; }
 
   const btn = document.getElementById('paystub-save-btn');
-  btn.disabled = true; btn.textContent = t('saving');
+  btn.disabled = true; btn.textContent = "Saving…";
 
   const stub = {
     id: uid(),
@@ -4552,9 +4492,8 @@ function renderCardsDashboard(){
           </div>
         </div>`;
       }).join('')}
-    </div>`:`<div style="font-size:13px;color:var(--ink3);padding:4px 0 12px">${currentLang==='es'?'Añade saldos a tus tarjetas para ver el resumen.':'Add balances to your cards to see the dashboard.'}</div>`}
+    </div>`:`<div style="font-size:13px;color:var(--ink3);padding:4px 0 12px">Add balances to your cards to see the dashboard.</div>`}
   `;
-  if(currentLang === 'es') translatePage();
 }
 
 function renderCards(){
@@ -4564,7 +4503,7 @@ function renderCards(){
   renderCardsDashboard();
 
   if(!CARDS.length){
-    cardsList.innerHTML = `<div class="empty"><div class="empty-icon">💳</div><div class="empty-msg">${t('no_cards')}</div></div>`;
+    cardsList.innerHTML = `<div class="empty"><div class="empty-icon">💳</div><div class="empty-msg">${"No cards yet — tap \"Add a card\" to get started"}</div></div>`;
     if(activityEl) activityEl.innerHTML = '';
     return;
   }
@@ -4700,8 +4639,7 @@ function renderCards(){
 
   activityEl.innerHTML = cardActivity.length
     ? '<div class="tx-list">'+cardActivity.map(e=>txRow(e, !e._autopay)).join('')+'</div>'
-    : `<div style="font-size:13px;color:var(--ink3);padding:8px 0">${currentLang==='es'?'Sin transacciones de tarjeta aún.':'No card transactions yet.'}</div>`;
-  if(currentLang === 'es') translatePage();
+    : `<div style="font-size:13px;color:var(--ink3);padding:8px 0">No card transactions yet.</div>`;
 }
 
 
@@ -4989,7 +4927,7 @@ function openSavingsSheet(){
   document.getElementById('sav-input').value = savingsData.bal || '';
   document.getElementById('sav-last-updated').textContent = savingsData.updatedAt
     ? new Date(savingsData.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})
-    : t('never');
+    : "never";
   document.getElementById('sav-overlay').classList.add('open');
   document.getElementById('sav-sheet').classList.add('open');
   setTimeout(()=>document.getElementById('sav-input').focus(), 350);
@@ -5135,19 +5073,17 @@ function loadFXRates(){
   } catch(e){ fxRates = { ...FX_FALLBACK, fetchedAt: null, source: 'fallback' }; }
 }
 const METALS_CACHE  = 'ledger_metals_cache';
-const CRYPTO_CACHE  = 'ledger_crypto_cache';
 let assetsData  = { gold:0, silver:0, savings:0, k401:0,
-                    btc:0, eth:0, otherCrypto:0, otherCryptoName:'',
+                    iqd:0, vnd:0,
                     realEstate:0, realEstateName:'',
                     vehicle1:0, vehicle1Name:'', vehicle2:0, vehicle2Name:'',
                     updatedAt:null };
 let metalPrices = { gold:0, silver:0, fetchedAt:null };
-let cryptoPrices = { btc:0, eth:0, fetchedAt:null };
 
 function loadAssets(){
   try { assetsData  = { ...assetsData, ...JSON.parse(localStorage.getItem(ASSETS_KEY)||'{}') }; } catch(e){}
   try { metalPrices = JSON.parse(localStorage.getItem(METALS_CACHE)||'{"gold":0,"silver":0,"fetchedAt":null}'); } catch(e){}
-  try { cryptoPrices = JSON.parse(localStorage.getItem(CRYPTO_CACHE)||'{"btc":0,"eth":0,"fetchedAt":null}'); } catch(e){}
+  loadFXRates();
   dbGet('assets').then(val=>{
     if(val){ try{ assetsData={...assetsData,...JSON.parse(val)}; localStorage.setItem(ASSETS_KEY,JSON.stringify(assetsData)); renderHome(); }catch(e){} }
   });
@@ -5244,48 +5180,6 @@ function metalPricesStale(){
     (Date.now() - new Date(metalPrices.fetchedAt).getTime()) > 24*60*60*1000;
 }
 
-async function fetchCryptoPrices(){
-  // Return cache if fresh (5 min)
-  if(cryptoPrices.fetchedAt && cryptoPrices.btc > 1000 &&
-    (Date.now() - new Date(cryptoPrices.fetchedAt).getTime()) < 5*60*1000){
-    return cryptoPrices;
-  }
-  try {
-    const r = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd',
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if(r.ok){
-      const d = await r.json();
-      const btc = d?.bitcoin?.usd;
-      const eth = d?.ethereum?.usd;
-      if(btc > 1000 && eth > 10){
-        cryptoPrices = { btc, eth, fetchedAt: new Date().toISOString(), source: 'CoinGecko' };
-        localStorage.setItem(CRYPTO_CACHE, JSON.stringify(cryptoPrices));
-        return cryptoPrices;
-      }
-    }
-  } catch(e){}
-  // Fallback — try proxy
-  try {
-    const r = await fetch(
-      'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd'),
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if(r.ok){
-      const d = await r.json();
-      const btc = d?.bitcoin?.usd;
-      const eth = d?.ethereum?.usd;
-      if(btc > 1000){
-        cryptoPrices = { btc, eth, fetchedAt: new Date().toISOString(), source: 'CoinGecko (proxy)' };
-        localStorage.setItem(CRYPTO_CACHE, JSON.stringify(cryptoPrices));
-      }
-    }
-  } catch(e){}
-  return cryptoPrices;
-}
-
-
 function assetsNetValue(){
   const goldVal    = (assetsData.gold   || 0) * (metalPrices.gold   || 0);
   const silverVal  = (assetsData.silver || 0) * (metalPrices.silver || 0);
@@ -5294,19 +5188,17 @@ function assetsNetValue(){
   const k401contrib= assetsData.k401contrib|| 0;
   const k401match  = assetsData.k401match  || 0;
   const k401ytd    = assetsData.k401ytd    || 0;
-  const iqdVal     = 0;
-  const vndVal     = 0;
-  // Crypto
-  const btcVal     = (assetsData.btc || 0) * (cryptoPrices.btc || 0);
-  const ethVal     = (assetsData.eth || 0) * (cryptoPrices.eth || 0);
-  const otherCrypto= assetsData.otherCrypto || 0;
+  // Foreign currency held as physical cash. fxRates.IQD / fxRates.VND are quoted as
+  // units-per-USD (e.g. 1 USD = 1,310 IQD), so the USD value of a stash is qty ÷ rate.
+  const iqdVal     = (fxRates.IQD > 0) ? (assetsData.iqd || 0) / fxRates.IQD : 0;
+  const vndVal     = (fxRates.VND > 0) ? (assetsData.vnd || 0) / fxRates.VND : 0;
   // Real estate & vehicles
   const realEstate = assetsData.realEstate  || 0;
   const vehicles   = (assetsData.vehicle1   || 0) + (assetsData.vehicle2 || 0);
   const total = goldVal + silverVal + savings + k401 + iqdVal + vndVal +
-                btcVal + ethVal + otherCrypto + realEstate + vehicles;
+                realEstate + vehicles;
   return { goldVal, silverVal, savings, k401, k401contrib, k401match, k401ytd,
-           iqdVal, vndVal, btcVal, ethVal, otherCrypto, realEstate, vehicles, total };
+           iqdVal, vndVal, realEstate, vehicles, total };
 }
 
 async function openAssetsSheet(){
@@ -5317,8 +5209,8 @@ async function openAssetsSheet(){
   if(document.getElementById('asset-401k-contrib')) document.getElementById('asset-401k-contrib').value = assetsData.k401contrib || '';
   if(document.getElementById('asset-401k-match'))   document.getElementById('asset-401k-match').value   = assetsData.k401match   || '';
   if(document.getElementById('asset-401k-ytd'))     document.getElementById('asset-401k-ytd').value     = assetsData.k401ytd     || '';
-  document.getElementById('asset-iqd') && (document.getElementById('asset-iqd').value = '');
-  document.getElementById('asset-vnd') && (document.getElementById('asset-vnd').value = '');
+  document.getElementById('asset-iqd') && (document.getElementById('asset-iqd').value = assetsData.iqd || '');
+  document.getElementById('asset-vnd') && (document.getElementById('asset-vnd').value = assetsData.vnd || '');
 
   document.getElementById('assets-last-updated').textContent = assetsData.updatedAt
     ? new Date(assetsData.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
@@ -5347,10 +5239,6 @@ async function openAssetsSheet(){
         (s>0?' → <strong style="color:#708090">$'+(s*prices.silver).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</strong>':'');
     }
   }).catch(()=>{});
-  document.getElementById('asset-btc').value              = assetsData.btc              || '';
-  document.getElementById('asset-eth').value              = assetsData.eth              || '';
-  document.getElementById('asset-other-crypto').value     = assetsData.otherCrypto      || '';
-  document.getElementById('asset-other-crypto-name').value= assetsData.otherCryptoName  || '';
   document.getElementById('asset-real-estate').value      = assetsData.realEstate       || '';
   document.getElementById('asset-real-estate-name').value = assetsData.realEstateName   || '';
   document.getElementById('asset-vehicle1').value         = assetsData.vehicle1         || '';
@@ -5365,20 +5253,21 @@ async function openAssetsSheet(){
   document.getElementById('assets-overlay').classList.add('open');
   document.getElementById('assets-sheet').classList.add('open');
 
-  // Fetch crypto prices
-  const cryptoPreviewEl = document.getElementById('crypto-price-preview');
-  if(cryptoPreviewEl) cryptoPreviewEl.innerHTML = '<span style="color:var(--amber)">⏳ Fetching live prices…</span>';
-  fetchCryptoPrices().then(p=>{
-    if(cryptoPreviewEl && p.btc > 1000){
-      const btcVal = (assetsData.btc||0) * p.btc;
-      const ethVal = (assetsData.eth||0) * p.eth;
-      cryptoPreviewEl.innerHTML =
-        '<strong>Live crypto prices</strong> · <span style="color:var(--green)">' + (p.source||'CoinGecko') + '</span><br>' +
-        '₿ Bitcoin: <strong>$' + Math.round(p.btc).toLocaleString() + '</strong>' +
-        (assetsData.btc>0 ? ' → <strong style="color:#f7931a">$' + Math.round(btcVal).toLocaleString() + '</strong>' : '') + '<br>' +
-        'Ξ Ethereum: <strong>$' + Math.round(p.eth).toLocaleString() + '</strong>' +
-        (assetsData.eth>0 ? ' → <strong style="color:#627eea">$' + Math.round(ethVal).toLocaleString() + '</strong>' : '');
-    }
+  // Fetch foreign-currency (IQD / VND) exchange rates
+  const fxPreviewEl = document.getElementById('fx-price-preview');
+  if(fxPreviewEl) fxPreviewEl.innerHTML = '<span style="color:var(--amber)">⏳ Fetching live exchange rates…</span>';
+  fetchFXRates().then(fx=>{
+    if(!fxPreviewEl || !(fx.IQD>0)) return;
+    const iqdVal = fx.IQD ? (assetsData.iqd||0)/fx.IQD : 0;
+    const vndVal = fx.VND ? (assetsData.vnd||0)/fx.VND : 0;
+    const srcLabel = fx.source==='live' ? 'live rate' : 'estimated rate';
+    const srcColor = fx.source==='live' ? 'var(--green)' : 'var(--amber)';
+    fxPreviewEl.innerHTML =
+      '<strong>Exchange rates</strong> · <span style="color:'+srcColor+'">'+srcLabel+'</span><br>' +
+      '🇮🇶 Dinar: <strong>$1 = '+Math.round(fx.IQD).toLocaleString()+' IQD</strong>' +
+      (assetsData.iqd>0 ? ' → <strong style="color:#047857">$'+iqdVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</strong>' : '') + '<br>' +
+      '🇻🇳 Dong: <strong>$1 = '+Math.round(fx.VND).toLocaleString()+' VND</strong>' +
+      (assetsData.vnd>0 ? ' → <strong style="color:#b91c1c">$'+vndVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</strong>' : '');
   }).catch(()=>{});
 }
 
@@ -5426,12 +5315,8 @@ async function saveAssets(){
     k401contrib: parseFloat(document.getElementById('asset-401k-contrib')?.value) || 0,
     k401match:   parseFloat(document.getElementById('asset-401k-match')?.value)   || 0,
     k401ytd:     parseFloat(document.getElementById('asset-401k-ytd')?.value)     || 0,
-    iqd: 0,
-    vnd: 0,
-    btc:             parseFloat(document.getElementById('asset-btc').value)               || 0,
-    eth:             parseFloat(document.getElementById('asset-eth').value)               || 0,
-    otherCrypto:     parseFloat(document.getElementById('asset-other-crypto').value)      || 0,
-    otherCryptoName: document.getElementById('asset-other-crypto-name').value.trim()      || '',
+    iqd: parseFloat(document.getElementById('asset-iqd')?.value) || 0,
+    vnd: parseFloat(document.getElementById('asset-vnd')?.value) || 0,
     realEstate:      parseFloat(document.getElementById('asset-real-estate').value)       || 0,
     realEstateName:  document.getElementById('asset-real-estate-name').value.trim()       || '',
     vehicle1:        parseFloat(document.getElementById('asset-vehicle1').value)          || 0,
@@ -5443,7 +5328,7 @@ async function saveAssets(){
   localStorage.setItem(ASSETS_KEY, JSON.stringify(assetsData));
   dbSet('assets', assetsData);
   closeAssetsSheet();
-  await Promise.all([fetchMetalPrices(), fetchCryptoPrices()]);
+  await Promise.all([fetchMetalPrices(), fetchFXRates()]);
   showToast('Assets saved');
   renderHome();
 }
@@ -5456,12 +5341,11 @@ function renderAssetsSection(){
   const sPrice = metalPrices.silver || 0;
   const hasData = assetsData.gold>0 || assetsData.silver>0 || assetsData.savings>0 ||
                   assetsData.k401>0 || assetsData.iqd>0 || assetsData.vnd>0 ||
-                  assetsData.btc>0 || assetsData.eth>0 || assetsData.otherCrypto>0 ||
                   assetsData.realEstate>0 || assetsData.vehicle1>0 || assetsData.vehicle2>0;
 
   if(!hasData){
     el.innerHTML = `<div class="dash-card" style="cursor:pointer" onclick="openAssetsSheet()">
-      <div style="font-size:14px;font-weight:500;color:var(--ink3)">${currentLang==='es'?'Toca Editar para añadir tus activos — oro, cripto, bienes raíces, vehículos y más':'Tap Edit to add your assets — gold, crypto, real estate, vehicles & more'}</div>
+      <div style="font-size:14px;font-weight:500;color:var(--ink3)">Tap Edit to add your assets — gold, currency, real estate, vehicles & more</div>
     </div>`;
     return;
   }
@@ -5485,38 +5369,31 @@ function renderAssetsSection(){
       </div>
       <div class="asset-val">${sPrice?fmt(assetsData.silver*sPrice):'—'}</div>
     </div>`);
-  // Crypto
-  if(assetsData.btc>0){
-    const btcP = cryptoPrices.btc||0;
+  // Foreign currency (physical cash held)
+  if(assetsData.iqd>0){
+    const iqdRate = fxRates.IQD || 0;
+    const iqdPerUnit = iqdRate ? 1/iqdRate : 0;
     rows.push(`<div class="asset-row">
-      <div class="asset-icon" style="background:#fff7ed;color:#f7931a">₿</div>
+      <div class="asset-icon" style="background:#ecfdf5;color:#047857">🇮🇶</div>
       <div class="asset-body">
-        <div class="asset-name">Bitcoin</div>
-        <div class="asset-meta">${assetsData.btc} BTC${btcP?' · $'+Math.round(btcP).toLocaleString()+'/BTC':''}</div>
+        <div class="asset-name">Iraqi Dinar</div>
+        <div class="asset-meta">${assetsData.iqd.toLocaleString()} IQD${iqdPerUnit?' · $'+iqdPerUnit.toFixed(iqdPerUnit<0.001?7:4)+'/unit':''}</div>
       </div>
-      <div class="asset-val" style="color:#f7931a">${btcP?fmt(assetsData.btc*btcP):'—'}</div>
+      <div class="asset-val" style="color:#047857">${iqdRate?fmt(assetsData.iqd/iqdRate):'—'}</div>
     </div>`);
   }
-  if(assetsData.eth>0){
-    const ethP = cryptoPrices.eth||0;
+  if(assetsData.vnd>0){
+    const vndRate = fxRates.VND || 0;
+    const vndPerUnit = vndRate ? 1/vndRate : 0;
     rows.push(`<div class="asset-row">
-      <div class="asset-icon" style="background:#eef2ff;color:#627eea">Ξ</div>
+      <div class="asset-icon" style="background:#fef2f2;color:#b91c1c">🇻🇳</div>
       <div class="asset-body">
-        <div class="asset-name">Ethereum</div>
-        <div class="asset-meta">${assetsData.eth} ETH${ethP?' · $'+Math.round(ethP).toLocaleString()+'/ETH':''}</div>
+        <div class="asset-name">Vietnamese Dong</div>
+        <div class="asset-meta">${assetsData.vnd.toLocaleString()} VND${vndPerUnit?' · $'+vndPerUnit.toFixed(vndPerUnit<0.001?7:4)+'/unit':''}</div>
       </div>
-      <div class="asset-val" style="color:#627eea">${ethP?fmt(assetsData.eth*ethP):'—'}</div>
+      <div class="asset-val" style="color:#b91c1c">${vndRate?fmt(assetsData.vnd/vndRate):'—'}</div>
     </div>`);
   }
-  if(assetsData.otherCrypto>0) rows.push(`
-    <div class="asset-row">
-      <div class="asset-icon" style="background:#f0fdf4;color:#16a34a">🪙</div>
-      <div class="asset-body">
-        <div class="asset-name">${assetsData.otherCryptoName||'Other crypto'}</div>
-        <div class="asset-meta">Manual value</div>
-      </div>
-      <div class="asset-val">${fmt(assetsData.otherCrypto)}</div>
-    </div>`);
   if(assetsData.savings>0) rows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:var(--green-bg);color:var(--green)">💰</div>
@@ -5596,17 +5473,17 @@ function renderAssetsTab(){
   if(nwEl) nwEl.innerHTML =
     '<div class="dash-card">' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + t('checking') + '</div><div class="debt-stat-val" style="color:var(--green)">' + fmt(chkBal) + '</div></div>' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + (t('savings_account')||'Savings') + '</div><div class="debt-stat-val" style="color:var(--blue)">' + fmt(savingsData.bal||0) + '</div></div>' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + t('assets') + '</div><div class="debt-stat-val" style="color:#b8860b">' + fmt(av.total) + '</div></div>' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + t('cc_debt') + '</div><div class="debt-stat-val red">' + fmt(totalDebt) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">' + "Checking" + '</div><div class="debt-stat-val" style="color:var(--green)">' + fmt(chkBal) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">' + ("Savings account"||'Savings') + '</div><div class="debt-stat-val" style="color:var(--blue)">' + fmt(savingsData.bal||0) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">' + "Assets" + '</div><div class="debt-stat-val" style="color:#b8860b">' + fmt(av.total) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">' + "CC Debt" + '</div><div class="debt-stat-val red">' + fmt(totalDebt) + '</div></div>' +
     '</div>' +
     '<div style="background:var(--off);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">' +
-    '<span style="font-size:12px;font-weight:600;color:var(--ink2)">' + t('total_assets') + '</span>' +
+    '<span style="font-size:12px;font-weight:600;color:var(--ink2)">' + "Total assets" + '</span>' +
     '<span style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">' + fmt(totalAssets) + '</span>' +
     '</div>' +
     '<div style="background:' + (netWorth>=0?'var(--green-bg)':'var(--red-bg)') + ';border:1px solid ' + (netWorth>=0?'var(--green-mid)':'var(--red-mid)') + ';border-radius:var(--radius-sm);padding:12px 16px;display:flex;justify-content:space-between;align-items:center">' +
-    '<span style="font-size:14px;font-weight:600;color:' + (netWorth>=0?'var(--green)':'var(--red)') + '">' + t('net_worth') + '</span>' +
+    '<span style="font-size:14px;font-weight:600;color:' + (netWorth>=0?'var(--green)':'var(--red)') + '">' + "Net worth" + '</span>' +
     '<span style="font-size:26px;font-weight:700;font-family:DM Mono,monospace;color:' + (netWorth>=0?'var(--green)':'var(--red)') + ';letter-spacing:-.02em">' + fmt(netWorth) + '</span>' +
     '</div></div>';
 
@@ -5646,7 +5523,7 @@ function renderAssetsTab(){
         '<div style="font-size:12px;color:var(--ink3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">Balance as of ' + balanceAge + ' · Tap Edit to update</div>' +
         '</div>';
     } else {
-      k401El.innerHTML = `<div style="font-size:13px;color:var(--ink3);padding:8px 0">${t('enter_401k')}</div>`;
+      k401El.innerHTML = `<div style="font-size:13px;color:var(--ink3);padding:8px 0">${"Enter your 401k balance in Edit to see details."}</div>`;
     }
   }
   fetchMetalPrices().then(()=>{ try{ renderAssetsSection(); } catch(e){} }).catch(()=>{});
@@ -5695,7 +5572,7 @@ function openCardSheet(cardId){
   cardEditColor = card ? card.color : CARD_COLORS[CARDS.length % CARD_COLORS.length];
   cardEditIcon  = card ? card.icon  : CARD_ICONS[CARDS.length % CARD_ICONS.length];
 
-  document.getElementById('card-edit-title').textContent = card ? t('edit_card') : t('add_card_title');
+  document.getElementById('card-edit-title').textContent = card ? "Edit card" : "Add card";
   document.getElementById('card-edit-name').value   = card ? card.name   : '';
   document.getElementById('card-edit-issuer').value = card ? (card.issuer||'') : '';
   document.getElementById('card-edit-id').value     = card ? card.id : '';
@@ -6217,7 +6094,7 @@ function checkFirstLaunch(){
 function openBillSheet(idx){
   const isEdit = idx !== null && idx >= 0;
   const b = isEdit ? BILLS[idx] : null;
-  document.getElementById('bill-sheet-title').textContent = isEdit ? t('edit_bill') : t('add_bill_title');
+  document.getElementById('bill-sheet-title').textContent = isEdit ? "Edit bill" : "Add bill";
   document.getElementById('bill-desc').value    = b ? b.desc    : '';
   document.getElementById('bill-amt').value     = b ? b.amt     : '';
   document.getElementById('bill-day').value     = b ? b.day     : '';
@@ -6284,7 +6161,7 @@ function renderPlanner(){
   const cardsWithData = CARDS.filter(c => cardBalances[c.id] && cardBalances[c.id].amt > 0);
 
   if(!cardsWithData.length){
-    document.getElementById('planner-summary').innerHTML = `<div style="font-size:13px;color:var(--ink3);padding:8px 0 16px">${t('add_balance')}</div>`;
+    document.getElementById('planner-summary').innerHTML = `<div style="font-size:13px;color:var(--ink3);padding:8px 0 16px">${"Add balances to your cards (Cards tab) to see a payoff plan."}</div>`;
     document.getElementById('planner-cards').innerHTML = '';
     return;
   }
@@ -6363,7 +6240,6 @@ function renderPlanner(){
       </div>
     </div>`;
   }).join('');
-  if(currentLang === 'es') translatePage();
 }
 
 // ── 30-Day Cash Flow Projection ───────────────────────────────────────────────
@@ -6408,7 +6284,7 @@ function renderCashFlow(){
   const calEl      = document.getElementById('cashflow-calendar');
 
   if(!startBal){
-    statusEl.innerHTML = `<div class="cashflow-warning">${t('set_checking')}</div>`;
+    statusEl.innerHTML = `<div class="cashflow-warning">${"Set your checking balance (tap the bank pill on Home) to see a projection."}</div>`;
     summaryEl.innerHTML = '';
     calEl.innerHTML    = '';
     return;
@@ -6456,7 +6332,7 @@ function renderCashFlow(){
     if(ev.type === 'pay'){
       // Payday row — full green highlight card
       return `<div style="background:var(--green-bg);border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);padding:12px 14px;margin:8px 0;display:flex;align-items:center;gap:12px">
-        <div style="background:var(--green);color:white;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;letter-spacing:.04em;flex-shrink:0">${t('payday')}</div>
+        <div style="background:var(--green);color:white;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;letter-spacing:.04em;flex-shrink:0">${"PAY DAY"}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:600;color:var(--green)">DMEA paycheck</div>
           <div style="font-size:11px;color:var(--ink3);margin-top:1px">${dayLabel} · ${ev.date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
@@ -6504,7 +6380,6 @@ function renderCashFlow(){
   calEl.innerHTML += `<div style="font-size:11px;color:var(--ink3);padding:10px 0 4px;text-align:right">
     Paydays estimated from your last income entry (bi-weekly). Bills from your BILLS list.
   </div>`;
-  if(currentLang === 'es') translatePage();
 }
 
 
@@ -6536,13 +6411,16 @@ loadFromDB();
 
 // 3. Check first launch / show welcome — deferred until DOM is fully parsed
 setTimeout(checkFirstLaunch, 0);
-setTimeout(function(){ if(currentLang === 'es') translatePage(); }, 200);
 
 // Shared by the startup background fetch and the visibilitychange refresh (tab/app
 // switch back) — fetchMetalPrices() internally respects the 15-min cache on its own,
 // so calling this on every visibility-return is safe: it's a no-op fetch if the cache
 // is still fresh, and only actually hits the network if it's stale.
 function refreshMetalPricesAndRenderHome(){
+  // Refresh foreign-currency rates too — respects its own 60-min cache internally.
+  fetchFXRates().then(function(){
+    try { if(document.getElementById('assets-main')) renderAssetsSection(); } catch(e){}
+  }).catch(function(){});
   fetchMetalPrices().then(function(){
     try {
       if(document.getElementById('assets-main')) renderAssetsSection();
@@ -6554,18 +6432,13 @@ function refreshMetalPricesAndRenderHome(){
         var av = assetsNetValue();
         var totalAssets = chkBal+(savingsData.bal||0)+av.total;
         var netWorth = totalAssets-totalDebt;
-        nwEl.innerHTML = '<div class="dash-card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px"><div class="debt-stat"><div class="debt-stat-label">'+t('checking')+'</div><div class="debt-stat-val" style="color:var(--green)">'+fmt(chkBal)+'</div></div><div class="debt-stat"><div class="debt-stat-label">'+(t('savings_account')||'Savings')+'</div><div class="debt-stat-val" style="color:var(--blue)">'+fmt(savingsData.bal||0)+'</div></div><div class="debt-stat"><div class="debt-stat-label">'+t('assets')+'</div><div class="debt-stat-val" style="color:#b8860b">'+fmt(av.total)+'</div></div><div class="debt-stat"><div class="debt-stat-label">'+t('cc_debt')+'</div><div class="debt-stat-val red">'+fmt(totalDebt)+'</div></div></div><div style="background:var(--off);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600;color:var(--ink2)">'+t('total_assets')+'</span><span style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">'+fmt(totalAssets)+'</span></div><div style="background:'+(netWorth>=0?'var(--green-bg)':'var(--red-bg)')+';border:1px solid '+(netWorth>=0?'var(--green-mid)':'var(--red-mid)')+';border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600;color:'+(netWorth>=0?'var(--green)':'var(--red)')+'">'+t('net_worth')+'</span><span style="font-size:22px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(netWorth>=0?'var(--green)':'var(--red)')+';letter-spacing:-.02em">'+fmt(netWorth)+'</span></div></div>';
+        nwEl.innerHTML = '<div class="dash-card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px"><div class="debt-stat"><div class="debt-stat-label">'+"Checking"+'</div><div class="debt-stat-val" style="color:var(--green)">'+fmt(chkBal)+'</div></div><div class="debt-stat"><div class="debt-stat-label">'+("Savings account"||'Savings')+'</div><div class="debt-stat-val" style="color:var(--blue)">'+fmt(savingsData.bal||0)+'</div></div><div class="debt-stat"><div class="debt-stat-label">'+"Assets"+'</div><div class="debt-stat-val" style="color:#b8860b">'+fmt(av.total)+'</div></div><div class="debt-stat"><div class="debt-stat-label">'+"CC Debt"+'</div><div class="debt-stat-val red">'+fmt(totalDebt)+'</div></div></div><div style="background:var(--off);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600;color:var(--ink2)">'+"Total assets"+'</span><span style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">'+fmt(totalAssets)+'</span></div><div style="background:'+(netWorth>=0?'var(--green-bg)':'var(--red-bg)')+';border:1px solid '+(netWorth>=0?'var(--green-mid)':'var(--red-mid)')+';border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600;color:'+(netWorth>=0?'var(--green)':'var(--red)')+'">'+"Net worth"+'</span><span style="font-size:22px;font-weight:700;font-family:\'DM Mono\',monospace;color:'+(netWorth>=0?'var(--green)':'var(--red)')+';letter-spacing:-.02em">'+fmt(netWorth)+'</span></div></div>';
       }
     } catch(e){}
   }).catch(function(){});
 }
 
 // 3. Background price fetches — fire and forget, never block
-setTimeout(function(){
-  fetchCryptoPrices().then(function(){
-    try { if(document.getElementById('assets-main')) renderAssetsSection(); } catch(e){}
-  }).catch(function(){});
-}, 1500);
 setTimeout(refreshMetalPricesAndRenderHome, 1000);
 
 setTimeout(function(){
@@ -6695,39 +6568,26 @@ setTimeout(function(){
     💡 <strong>DMEA contributes a flat amount plus a match each check</strong> — calculated automatically from your logged paystubs, no action needed here. This balance field is the one thing you still update by hand, from your plan statement.
   </div>
 
-  <!-- Crypto -->
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Cryptocurrency</div>
-  <div style="background:var(--off);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--ink3);line-height:1.6" id="crypto-price-preview">
-    Open Edit to fetch live prices…
+  <!-- Foreign currency (physical cash held) -->
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Foreign currency</div>
+  <div style="background:var(--off);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--ink3);line-height:1.6" id="fx-price-preview">
+    Open Edit to fetch live exchange rates…
   </div>
-  <div class="field-row" style="margin-bottom:12px">
+  <div class="field-row" style="margin-bottom:8px">
     <div class="field" style="margin-bottom:0">
-      <label>Bitcoin (BTC)</label>
-      <input type="number" id="asset-btc" inputmode="decimal" placeholder="0.00" step="0.00001" min="0"
-        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#f7931a;background:var(--card);outline:none;width:100%">
-      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Enter amount in BTC</div>
+      <label>Iraqi Dinar (IQD)</label>
+      <input type="number" id="asset-iqd" inputmode="decimal" placeholder="0" step="1000" min="0"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#047857;background:var(--card);outline:none;width:100%">
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Number of dinar you hold</div>
     </div>
     <div class="field" style="margin-bottom:0">
-      <label>Ethereum (ETH)</label>
-      <input type="number" id="asset-eth" inputmode="decimal" placeholder="0.00" step="0.001" min="0"
-        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#627eea;background:var(--card);outline:none;width:100%">
-      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Enter amount in ETH</div>
-    </div>
-  </div>
-  <div class="field-row" style="margin-bottom:16px">
-    <div class="field" style="margin-bottom:0">
-      <label>Other crypto name</label>
-      <input type="text" id="asset-other-crypto-name" placeholder="e.g. Solana, XRP…"
-        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--card);outline:none;width:100%">
-    </div>
-    <div class="field" style="margin-bottom:0">
-      <label>Value ($)</label>
-      <div class="amount-prefix">
-        <input type="number" id="asset-other-crypto" inputmode="decimal" placeholder="0.00" step="0.01" min="0"
-          style="font-family:'DM Mono',monospace;font-size:16px;padding:13px 14px 13px 30px;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--green);background:var(--card);outline:none;width:100%">
-      </div>
+      <label>Vietnamese Dong (VND)</label>
+      <input type="number" id="asset-vnd" inputmode="decimal" placeholder="0" step="1000" min="0"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#b91c1c;background:var(--card);outline:none;width:100%">
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Number of dong you hold</div>
     </div>
   </div>
+  <div style="font-size:11px;color:var(--ink3);margin-bottom:16px">Enter the face amount of physical cash you hold — the app fetches the live USD exchange rate automatically, same as gold and silver.</div>
 
   <!-- Real estate -->
   <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:4px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Real estate</div>
@@ -6947,8 +6807,8 @@ setTimeout(function(){
   <button class="welcome-btn" onclick="saveWelcomeName()" id="welcome-btn">Get started →</button>
   <div style="display:flex;gap:16px;justify-content:center;margin-top:14px">
     <button class="welcome-skip" onclick="saveWelcomeName(true)" id="welcome-skip">Skip for now</button>
-    <button class="welcome-skip" onclick="setWelcomeLang()" id="welcome-lang-btn" style="color:var(--ink2);font-weight:600">🌐 Español</button>
   </div>
 </div>
 
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
