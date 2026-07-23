@@ -240,6 +240,33 @@ body{font-family:'DM Sans',system-ui,sans-serif;min-height:100%;padding-bottom:9
 .bar-row-label{font-size:12px;color:var(--ink2);width:100px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-track{flex:1;height:9px;background:var(--off);border-radius:99px;overflow:hidden}
 .bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.dash-chart-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.dash-chart-insight{font-size:12px;color:var(--ink3);margin-bottom:12px;line-height:1.5}
+.dash-insight-banner{background:var(--blue-bg);border:1px solid rgba(37,99,235,.15);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--ink2);margin-top:10px;line-height:1.5}
+.dash-insight-banner.green{background:var(--green-bg);border-color:rgba(22,163,74,.15);color:var(--green)}
+.dash-insight-banner.red{background:var(--red-bg);border-color:rgba(220,38,38,.15);color:var(--red)}
+.dash-insight-banner.amber{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:6px}
+.donut-legend-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+.donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.donut-legend-pct{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3)}
+.heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px}
+.heatmap-cell{aspect-ratio:1;border-radius:3px;cursor:default}
+.heatmap-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px}
+.heatmap-label{font-size:9px;color:var(--ink3);text-align:center;font-weight:600}
+.merchant-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.merchant-row:last-child{border-bottom:none}
+.merchant-icon{width:32px;height:32px;border-radius:8px;background:var(--off);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.merchant-name{flex:1;font-size:13px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.merchant-count{font-size:11px;color:var(--ink3);margin-right:8px}
+.merchant-amt{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink)}
+.savings-bar-wrap{margin-top:10px}
+.savings-rate-pct{font-size:36px;font-weight:800;font-family:'DM Mono',monospace;letter-spacing:-.03em}
+.grouped-bar-wrap{display:flex;align-items:flex-end;gap:3px;height:120px;margin-bottom:8px}
+.grouped-bar-group{flex:1;display:flex;gap:2px;align-items:flex-end}
+.grouped-bar{flex:1;border-radius:3px 3px 0 0;min-height:2px;transition:height .4s}
+.grouped-bar-label{text-align:center;font-size:9px;color:var(--ink3);margin-top:4px}
 .bar-val{font-size:11px;font-family:'DM Mono',monospace;color:var(--ink3);width:64px;flex-shrink:0;text-align:right}
 
 /* Bills screen */
@@ -768,6 +795,34 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
   <div class="dash-card" id="cashflow-calendar"></div>
 </div>
 
+<!-- DASHBOARD -->
+<div class="screen app" id="screen-dashboard">
+  <div class="section-label" style="margin-top:4px">Income vs Expenses</div>
+  <div id="dash-income-expense"></div>
+
+  <div class="section-label" style="margin-top:20px">Spending by Category</div>
+  <div id="dash-category-donut"></div>
+
+  <div class="section-label" style="margin-top:20px">Top Merchants</div>
+  <div id="dash-merchants"></div>
+
+  <div class="section-label" style="margin-top:20px">Net Worth Trend</div>
+  <div id="dash-networth-trend"></div>
+
+  <div class="section-label" style="margin-top:20px">Debt Paydown Progress</div>
+  <div id="dash-debt-progress"></div>
+
+  <div class="section-label" style="margin-top:20px">Savings Rate</div>
+  <div id="dash-savings-rate"></div>
+
+  <div class="section-label" style="margin-top:20px">30-Day Cash Flow</div>
+  <div id="dash-cashflow"></div>
+  <div class="dash-card" id="dash-cashflow-summary" style="margin-bottom:10px"></div>
+  <div class="section-label" style="margin-top:4px">Day-by-day projection</div>
+  <div class="dash-card" id="dash-cashflow-calendar"></div>
+  <div style="height:24px"></div>
+</div>
+
 <button class="fab" id="fab" aria-label="Add entry">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
@@ -1087,8 +1142,8 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
   <button class="nav-btn" onclick="goTo('planner',this)">
     <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Planner
   </button>
-  <button class="nav-btn" onclick="goTo('cashflow',this)">
-    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Flow
+  <button class="nav-btn" onclick="goTo('dashboard',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
   </button>
   <button class="nav-btn" onclick="goTo('import',this)">
     <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/></svg>Import
@@ -1313,7 +1368,7 @@ const PERSONAL_BILLS = [
   {desc:'Hulu',cat:'Subscriptions',day:16,amt:100,autopay:'REI Card'},
   {desc:'Parents Phones',cat:'Phone',day:21,amt:80,autopay:'Mission Lane Green'},
   {desc:'Xcel Energy',cat:'Utilities',day:22,amt:200,autopay:''},
-  {desc:'Samsung (Affirm)',cat:'Loans',day:23,amt:70,autopay:'Affirm'},
+  // Samsung (Affirm) paid off — removed
   {desc:'LifeVantage',cat:'Health',day:25,amt:260,autopay:'REI Card'},
   {desc:'SiriusXM',cat:'Subscriptions',day:26,amt:30,autopay:'Merrick'},
   {desc:'Amazon Prime',cat:'Subscriptions',day:26,amt:11.67,autopay:'Amazon Prime Card'},
@@ -1331,7 +1386,7 @@ const PERSONAL_CARDS = [
   {id:'onemain',    name:'OneMain',            issuer:'BrightWay',     color:'#7c3aed', icon:'🟣', lastFour:''},
   {id:'merrick',    name:'Merrick',            issuer:'Merrick',       color:'#0891b2', icon:'🔷', lastFour:''},
   {id:'prime',      name:'Prime Store Card',   issuer:'Synchrony',     color:'#ea580c', icon:'🟠', lastFour:''},
-  {id:'affirm',     name:'Affirm',             issuer:'Affirm',        color:'#6366f1', icon:'🔮', lastFour:''},
+  // Affirm removed — paid off
   {id:'bigo',       name:'Big O Tires',        issuer:'Big O',         color:'#374151', icon:'⚫', lastFour:''},
   {id:'credone',    name:'Credit One',         issuer:'Credit One',    color:'#b91c1c', icon:'🃏', lastFour:''},
   {id:'furnrow',    name:'Furniture Row',      issuer:'Furniture Row', color:'#92400e', icon:'🪑', lastFour:''},
@@ -1467,6 +1522,7 @@ function goTo(screen, btn){
   if(screen==='assets') renderAssetsTab();
   if(screen==='planner') renderPlanner();
   if(screen==='cashflow') renderCashFlow();
+  if(screen==='dashboard') renderDashboard();
 }
 
 function renderAll(){
@@ -2905,15 +2961,14 @@ function autoCategory(desc){
   if(/onemain.*pmt|onemain.*payment|one main.*pmt/.test(d)) return 'Card Payment';
   if(/merrick.*pmt|merrick.*payment/.test(d)) return 'Card Payment';
   if(/credit one.*pmt|credit one.*payment/.test(d)) return 'Card Payment';
-  if(/affirm.*pmt|affirm.*payment/.test(d)) return 'Card Payment';
-  if(/kohls.*pmt|kohl.*payment/.test(d)) return 'Card Payment';
+  if(/loan|credit|capital one|discover|synchrony/.test(d)) return 'Loans';
   if(/amazon.*pmt|amazon.*payment|prime.*pmt/.test(d)) return 'Card Payment';
   if(/furniture row.*pmt|furniture row.*payment/.test(d)) return 'Card Payment';
   if(/synchrony.*pmt|synchrony.*payment/.test(d)) return 'Card Payment';
   // Generic CC payment patterns
   if(/online pmt|online payment|ach payment.*card|autopay.*card|bill pay.*card/.test(d)) return 'Card Payment';
   if(/ach payment capital|ach payment wells|ach payment mission|ach.*online pmt/.test(d)) return 'Card Payment';
-  if(/loan|affirm|credit|capital one|discover|synchrony/.test(d)) return 'Loans';
+  if(/loan|credit|capital one|discover|synchrony/.test(d)) return 'Loans';
   if(/atm|cash withdrawal|cash advance/.test(d))       return 'Cash';
   if(/payroll|direct dep|dmea|salary/.test(d))       return 'Income';
   return 'Other';
@@ -5258,6 +5313,8 @@ async function openAssetsSheet(){
   if(document.getElementById('asset-401k-contrib')) document.getElementById('asset-401k-contrib').value = assetsData.k401contrib || '';
   if(document.getElementById('asset-401k-match'))   document.getElementById('asset-401k-match').value   = assetsData.k401match   || '';
   if(document.getElementById('asset-401k-ytd'))     document.getElementById('asset-401k-ytd').value     = assetsData.k401ytd     || '';
+  if(document.getElementById('asset-401k-equity'))  document.getElementById('asset-401k-equity').value  = assetsData.k401equity  || '';
+  if(document.getElementById('asset-401k-bonds'))   document.getElementById('asset-401k-bonds').value   = assetsData.k401bonds   || '';
   document.getElementById('asset-iqd') && (document.getElementById('asset-iqd').value = assetsData.iqd||'');
   document.getElementById('asset-vnd') && (document.getElementById('asset-vnd').value = assetsData.vnd||'');
   document.getElementById('asset-idr') && (document.getElementById('asset-idr').value = assetsData.idr||'');
@@ -5368,6 +5425,8 @@ async function saveAssets(){
     k401contrib: parseFloat(document.getElementById('asset-401k-contrib')?.value) || 0,
     k401match:   parseFloat(document.getElementById('asset-401k-match')?.value)   || 0,
     k401ytd:     parseFloat(document.getElementById('asset-401k-ytd')?.value)     || 0,
+    k401equity:  parseFloat(document.getElementById('asset-401k-equity')?.value)  || 81.26,
+    k401bonds:   parseFloat(document.getElementById('asset-401k-bonds')?.value)   || 18.74,
     iqd: parseFloat(document.getElementById('asset-iqd')?.value) || 0,
     vnd: parseFloat(document.getElementById('asset-vnd')?.value) || 0,
     idr: parseFloat(document.getElementById('asset-idr')?.value) || 0,
@@ -5578,15 +5637,15 @@ function renderAssetsTab(){
         '<div class="chart-title" style="margin-bottom:10px">Allocation</div>' +
         '<div class="bar-row" style="margin-bottom:8px">' +
         '<div class="bar-row-label">Equity</div>' +
-        '<div class="bar-track"><div class="bar-fill" style="width:81.26%;background:#2563eb"></div></div>' +
-        '<div class="bar-val">81.26% · ' + fmt(av.k401*0.8126) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (assetsData.k401equity||81.26) + '%;background:#2563eb"></div></div>' +
+        '<div class="bar-val">' + (assetsData.k401equity||81.26) + '% · ' + fmt(av.k401*(assetsData.k401equity||81.26)/100) + '</div>' +
         '</div>' +
         '<div class="bar-row">' +
         '<div class="bar-row-label">Bonds</div>' +
-        '<div class="bar-track"><div class="bar-fill" style="width:18.74%;background:#7c3aed"></div></div>' +
-        '<div class="bar-val">18.74% · ' + fmt(av.k401*0.1874) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (assetsData.k401bonds||18.74) + '%;background:#7c3aed"></div></div>' +
+        '<div class="bar-val">' + (assetsData.k401bonds||18.74) + '% · ' + fmt(av.k401*(assetsData.k401bonds||18.74)/100) + '</div>' +
         '</div></div>' +
-        '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Allocation from your plan portal as of Jul 22, 2026.</div>' +
+        '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Allocation from your plan portal · update anytime in Edit.</div>' +
         '<div style="font-size:12px;color:var(--ink3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">Balance as of ' + balanceAge + ' · Tap Edit to update</div>' +
         '</div>';
     } else {
@@ -6341,6 +6400,232 @@ function detectPaydays(daysAhead){
   return paydays;
 }
 
+function renderDashboard(){
+  const now = new Date();
+  const curKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const colors = ['#2563eb','#16a34a','#d97706','#7c3aed','#dc2626','#0891b2','#059669','#ea580c','#f97316','#6366f1'];
+
+  // Build 6-month history
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const me = entries.filter(e=>monthKey(e.date)===k);
+    const inc = me.filter(e=>e.type==='income').reduce((s,e)=>s+Number(e.amt),0);
+    const exp = me.filter(e=>e.type==='expense').reduce((s,e)=>s+Number(e.amt),0);
+    months.push({ k, label:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()], inc, exp, net:inc-exp });
+  }
+  const curMonth = months[months.length-1];
+  const prevMonth = months[months.length-2];
+
+  // ── 1. Income vs Expenses grouped bar chart ────────────────────────────────
+  const maxIE = Math.max(...months.flatMap(m=>[m.inc,m.exp]),1);
+  const groupedBars = months.map(m=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center">
+      <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:100px">
+        <div style="flex:1;background:#16a34a;border-radius:3px 3px 0 0;height:${Math.round(m.inc/maxIE*100)}%;opacity:.85;min-height:${m.inc>0?2:0}px"></div>
+        <div style="flex:1;background:#dc2626;border-radius:3px 3px 0 0;height:${Math.round(m.exp/maxIE*100)}%;opacity:.85;min-height:${m.exp>0?2:0}px"></div>
+      </div>
+      <div style="font-size:9px;color:var(--ink3);margin-top:4px;text-align:center">${m.label}</div>
+    </div>`).join('');
+  const ieInsight = curMonth.inc===0 ? 'No data yet this month.' :
+    curMonth.net>=0 ? `You're <strong style="color:var(--green)">${fmt(curMonth.net)} ahead</strong> this month — income beats expenses.` :
+    `You're <strong style="color:var(--red)">${fmt(Math.abs(curMonth.net))} over</strong> this month — expenses exceed income.`;
+  const prevComp = prevMonth.exp>0 && curMonth.exp>0 ?
+    curMonth.exp > prevMonth.exp
+      ? ` Spending is up ${Math.round((curMonth.exp-prevMonth.exp)/prevMonth.exp*100)}% vs last month.`
+      : ` Spending is down ${Math.round((prevMonth.exp-curMonth.exp)/prevMonth.exp*100)}% vs last month.`
+    : '';
+  document.getElementById('dash-income-expense').innerHTML = `<div class="dash-card">
+    <div class="dash-chart-title">Income vs Expenses — Last 6 Months</div>
+    <div class="dash-chart-insight">Monthly comparison of what came in vs what went out.</div>
+    <div style="display:flex;align-items:flex-end;gap:4px;height:100px">${groupedBars}</div>
+    <div class="trend-legend" style="margin-top:8px">
+      <div class="trend-legend-item"><div class="trend-legend-dot" style="background:#16a34a"></div>Income</div>
+      <div class="trend-legend-item"><div class="trend-legend-dot" style="background:#dc2626"></div>Expenses</div>
+    </div>
+    <div class="dash-insight-banner ${curMonth.net>=0?'green':'red'}">💡 ${ieInsight}${prevComp}</div>
+  </div>`;
+
+  // ── 2. Category donut ──────────────────────────────────────────────────────
+  const catTotals = {};
+  entries.filter(e=>e.type==='expense' && monthKey(e.date)===curKey)
+    .forEach(e=>{ catTotals[e.cat]=(catTotals[e.cat]||0)+Number(e.amt); });
+  const catSorted = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const totalSpend = catSorted.reduce((s,[,v])=>s+v,0);
+  let donutHtml = '<div style="font-size:13px;color:var(--ink3);padding:8px 0">No expenses this month yet.</div>';
+  if(catSorted.length){
+    const R=54, cx=64, cy=64, circ=2*Math.PI*R;
+    let offset=0;
+    const slices = catSorted.map(([cat,amt],i)=>{
+      const pct=amt/totalSpend;
+      const dash=pct*circ;
+      const slice=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${CAT_COLOR[cat]||colors[i%colors.length]}" stroke-width="18" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" opacity=".9"/>`;
+      offset+=dash;
+      return slice;
+    }).join('');
+    const topCat = catSorted[0];
+    const legendRows = catSorted.map(([cat,amt],i)=>`
+      <div class="donut-legend-row">
+        <div class="donut-legend-dot" style="background:${CAT_COLOR[cat]||colors[i%colors.length]}"></div>
+        <span>${CAT_EMOJI[cat]||''} ${cat}</span>
+        <span class="donut-legend-pct">${Math.round(amt/totalSpend*100)}%</span>
+      </div>`).join('');
+    donutHtml = `<div class="donut-wrap">
+      <svg width="128" height="128" viewBox="0 0 128 128" style="flex-shrink:0">${slices}
+        <text x="64" y="60" text-anchor="middle" font-size="11" fill="var(--ink3)" font-family="DM Sans,sans-serif">Total</text>
+        <text x="64" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)" font-family="DM Mono,monospace">${fmtShort(totalSpend)}</text>
+      </svg>
+      <div class="donut-legend">${legendRows}</div>
+    </div>
+    <div class="dash-insight-banner">💡 <strong>${CAT_EMOJI[topCat[0]]||''} ${topCat[0]}</strong> is your biggest category at ${Math.round(topCat[1]/totalSpend*100)}% of spending (${fmt(topCat[1])}).</div>`;
+  }
+  document.getElementById('dash-category-donut').innerHTML = `<div class="dash-card">
+    <div class="dash-chart-title">Spending by Category</div>
+    <div class="dash-chart-insight">Where your money went this month.</div>
+    ${donutHtml}
+  </div>`;
+
+  // ── 4. Top merchants ───────────────────────────────────────────────────────
+  const merchantTotals = {};
+  entries.filter(e=>e.type==='expense').forEach(e=>{
+    const raw = (e.description||'').replace(/\[.*?\]/g,'').trim();
+    // Normalize: strip trailing city/state, card suffixes
+    const name = raw.replace(/\s+(GRAND JUNCT.*|MONTROSE.*|DENVER.*|CA|CO|NY|TX|MO|UT)\s*$/i,'')
+                    .replace(/\s+#\d+.*$/,'').replace(/\s{2,}/g,' ').trim().slice(0,30);
+    if(!name) return;
+    if(!merchantTotals[name]) merchantTotals[name]={amt:0,count:0};
+    merchantTotals[name].amt+=Number(e.amt);
+    merchantTotals[name].count++;
+  });
+  const topMerchants = Object.entries(merchantTotals).sort((a,b)=>b[1].amt-a[1].amt).slice(0,8);
+  const maxM = topMerchants[0]?.[1].amt||1;
+  const merchantRows = topMerchants.map(([name,{amt,count}],i)=>`
+    <div class="merchant-row">
+      <div class="merchant-icon" style="background:${colors[i%colors.length]}22;color:${colors[i%colors.length]}">${(i+1)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="merchant-name">${name}</div>
+        <div style="height:4px;background:var(--off);border-radius:99px;margin-top:3px"><div style="height:100%;width:${Math.round(amt/maxM*100)}%;background:${colors[i%colors.length]};border-radius:99px"></div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:8px">
+        <div class="merchant-amt">${fmt(amt)}</div>
+        <div class="merchant-count">${count} txn${count!==1?'s':''}</div>
+      </div>
+    </div>`).join('');
+  const topMerchant = topMerchants[0];
+  document.getElementById('dash-merchants').innerHTML = `<div class="dash-card">
+    <div class="dash-chart-title">Top Merchants — All Time</div>
+    <div class="dash-chart-insight">Where you spend most frequently and most money.</div>
+    ${merchantRows||'<div style="color:var(--ink3);font-size:13px">No expense data yet.</div>'}
+    ${topMerchant?`<div class="dash-insight-banner">💡 <strong>${topMerchant[0]}</strong> is your #1 merchant at ${fmt(topMerchant[1].amt)} across ${topMerchant[1].count} transactions.</div>`:''}
+  </div>`;
+
+  // ── 5. Net worth trend line ────────────────────────────────────────────────
+  const chkBal = checkingData.bal||0;
+  const totalDebt = totalDebtSummary().totalBal;
+  const av = assetsNetValue();
+  const netWorthNow = (chkBal+(savingsData.bal||0)+av.total) - totalDebt;
+  // Approximate historical net worth from monthly income/expense delta
+  const nwPoints = months.map((m,i)=>{
+    const delta = months.slice(i).reduce((s,mm)=>s+mm.net, 0);
+    return netWorthNow - delta;
+  });
+  nwPoints.push(netWorthNow);
+  const nwLabels = [...months.map(m=>m.label),'Now'];
+  const minNW = Math.min(...nwPoints);
+  const maxNW = Math.max(...nwPoints, minNW+1);
+  const NW=320,NH=100,NPL=8,NPR=8,NPT=12,NPB=20;
+  const nwIW=NW-NPL-NPR, nwIH=NH-NPT-NPB;
+  const nwPX=i=>NPL+(i/(nwPoints.length-1))*nwIW;
+  const nwPY=v=>NPT+nwIH-((v-minNW)/(maxNW-minNW))*nwIH;
+  const nwPath='M '+nwPoints.map((v,i)=>`${nwPX(i)} ${nwPY(v)}`).join(' L ');
+  // Fill area
+  const nwFill=nwPath+` L ${nwPX(nwPoints.length-1)} ${NH-NPB} L ${nwPX(0)} ${NH-NPB} Z`;
+  const nwColor = netWorthNow>=0?'#16a34a':'#dc2626';
+  const nwDots=nwPoints.map((v,i)=>`<circle cx="${nwPX(i)}" cy="${nwPY(v)}" r="3" fill="${nwColor}"/>`).join('');
+  const nwLbls=nwLabels.map((l,i)=>`<text x="${nwPX(i)}" y="${NH-4}" text-anchor="middle" font-size="9" fill="var(--ink3)" font-family="DM Sans,sans-serif">${l}</text>`).join('');
+  const nwChange = nwPoints[nwPoints.length-1]-nwPoints[0];
+  document.getElementById('dash-networth-trend').innerHTML = `<div class="dash-card">
+    <div class="dash-chart-title">Net Worth Trend</div>
+    <div class="dash-chart-insight">Estimated trajectory over the last 6 months based on income/expense delta.</div>
+    <svg width="100%" viewBox="0 0 ${NW} ${NH}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+      <defs><linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${nwColor}" stop-opacity=".2"/><stop offset="100%" stop-color="${nwColor}" stop-opacity="0"/></linearGradient></defs>
+      <path d="${nwFill}" fill="url(#nwGrad)"/>
+      <path d="${nwPath}" stroke="${nwColor}" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      ${nwDots}${nwLbls}
+    </svg>
+    <div class="dash-insight-banner ${nwChange>=0?'green':'red'}">💡 Net worth ${nwChange>=0?'grew':'dropped'} by <strong>${fmt(Math.abs(nwChange))}</strong> over the last 6 months. Current: <strong>${fmt(netWorthNow)}</strong>.</div>
+  </div>`;
+
+  // ── 6. Debt paydown progress ───────────────────────────────────────────────
+  const debtCards = CARDS.filter(c=>cardBalances[c.id]&&cardBalances[c.id].amt>0);
+  const debtRows = debtCards.map(c=>{
+    const cd=cardBalances[c.id];
+    const pct=cd.limit>0?Math.round(cd.amt/cd.limit*100):null;
+    const col=pct&&pct>=80?'#dc2626':pct&&pct>=50?'#d97706':'#16a34a';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px">
+        <span>${c.icon} ${c.name}</span><span style="font-family:'DM Mono',monospace;color:${col}">${fmt(cd.amt)}</span>
+      </div>
+      ${pct!==null?`<div style="height:8px;background:var(--off);border-radius:99px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${col};border-radius:99px"></div></div>
+      <div style="font-size:10px;color:var(--ink3);margin-top:2px">${pct}% of ${fmt(cd.limit)} limit used · APR ${cd.apr||'?'}%</div>`:''}
+    </div>`;
+  }).join('');
+  const totalDebtAmt = debtCards.reduce((s,c)=>s+(cardBalances[c.id]?.amt||0),0);
+  const highestAPR = debtCards.reduce((h,c)=>{const a=cardBalances[c.id]?.apr||0;return a>h.apr?{name:c.name,apr:a}:h;},{name:'',apr:0});
+  document.getElementById('dash-debt-progress').innerHTML = `<div class="dash-card">
+    <div class="dash-chart-title">Credit Card Debt Breakdown</div>
+    <div class="dash-chart-insight">Utilization and balance by card.</div>
+    ${debtRows||'<div style="color:var(--ink3);font-size:13px">No credit card debt — great!</div>'}
+    ${totalDebtAmt>0?`<div class="dash-insight-banner red">💡 Total CC debt: <strong>${fmt(totalDebtAmt)}</strong>.${highestAPR.apr>0?' Highest APR: <strong>'+highestAPR.name+' at '+highestAPR.apr+'%</strong> — pay this one first.':''}</div>`:''}
+  </div>`;
+
+  // ── 7. Savings rate ────────────────────────────────────────────────────────
+  const srRows = months.filter(m=>m.inc>0).map((m,i)=>{
+    const rate=Math.max(0,Math.round((m.net/m.inc)*100));
+    const col=rate>=20?'#16a34a':rate>=10?'#d97706':'#dc2626';
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:3px">
+        <span>${m.label}</span><span style="font-weight:700;color:${col}">${rate}%</span>
+      </div>
+      <div style="height:8px;background:var(--off);border-radius:99px;overflow:hidden"><div style="height:100%;width:${Math.min(rate,100)}%;background:${col};border-radius:99px;transition:width .6s"></div></div>
+    </div>`;
+  }).join('');
+  const curRate = curMonth.inc>0?Math.max(0,Math.round(curMonth.net/curMonth.inc*100)):null;
+  const srInsight = curRate===null?'No income data this month yet.':
+    curRate>=20?`Strong! You saved <strong style="color:#16a34a">${curRate}%</strong> of income this month — above the 20% benchmark.`:
+    curRate>=10?`You saved <strong style="color:#d97706">${curRate}%</strong> this month — below the 20% benchmark but positive.`:
+    `You saved <strong style="color:#dc2626">${curRate}%</strong> this month — expenses are consuming most of your income.`;
+  document.getElementById('dash-savings-rate').innerHTML = `<div class="dash-card">
+    <div class="dash-chart-title">Savings Rate by Month</div>
+    <div class="dash-chart-insight">What % of income you kept after expenses. 20%+ is the benchmark.</div>
+    ${srRows||'<div style="color:var(--ink3);font-size:13px">Need income data to calculate.</div>'}
+    ${curRate!==null?`<div class="dash-insight-banner ${curRate>=20?'green':curRate>=10?'amber':'red'}">💡 ${srInsight}</div>`:''}
+  </div>`;
+
+  // ── 8. Cash flow (reuse existing logic, new containers) ───────────────────
+  try{ renderCashFlowInto('dash-cashflow-summary','dash-cashflow-calendar'); } catch(e){}
+}
+
+function renderCashFlowInto(summaryId, calId){
+  // Delegate to main cashflow render but into alternate element IDs
+  const summaryEl = document.getElementById(summaryId);
+  const calEl     = document.getElementById(calId);
+  if(!summaryEl||!calEl) return;
+  // Temporarily swap IDs, render, swap back
+  const origSum = document.getElementById('cashflow-summary');
+  const origCal = document.getElementById('cashflow-calendar');
+  if(origSum) origSum.id='cashflow-summary-tmp';
+  if(origCal) origCal.id='cashflow-calendar-tmp';
+  summaryEl.id='cashflow-summary';
+  calEl.id='cashflow-calendar';
+  try{ renderCashFlow(); } catch(e){}
+  summaryEl.id=summaryId;
+  calEl.id=calId;
+  if(origSum) origSum.id='cashflow-summary';
+  if(origCal) origCal.id='cashflow-calendar';
+}
+
 function renderCashFlow(){
   const startBal = checkingData.bal || 0;
   const today    = new Date();
@@ -6631,6 +6916,21 @@ setTimeout(function(){
     </div>
     <div style="font-size:12px;color:var(--ink3);margin-top:6px">Update from your DMEA retirement plan statement. Pre-tax value.</div>
   </div>
+
+  <div style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:8px">Allocation split (%)</div>
+  <div class="field-row" style="margin-bottom:4px">
+    <div class="field" style="margin-bottom:0">
+      <label>Equity %</label>
+      <input type="number" id="asset-401k-equity" inputmode="decimal" placeholder="81.26" step="0.01" min="0" max="100"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#2563eb;background:var(--card);outline:none;width:100%">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Bonds %</label>
+      <input type="number" id="asset-401k-bonds" inputmode="decimal" placeholder="18.74" step="0.01" min="0" max="100"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#7c3aed;background:var(--card);outline:none;width:100%">
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--ink3);margin-bottom:16px">From your plan portal's Distribution view. Should add up to 100%.</div>
 
   <div style="background:var(--blue-bg);border:1px solid rgba(37,99,235,.15);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--ink2);line-height:1.7">
     💡 <strong>DMEA contributes a flat amount plus a match each check</strong> — calculated automatically from your logged paystubs, no action needed here. This balance field is the one thing you still update by hand, from your plan statement.
