@@ -998,7 +998,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
       <label>Gross pay ($)</label>
       <div class="amount-prefix">
         <input type="number" id="paystub-gross" inputmode="decimal" placeholder="0.00" step="0.01" min="0" oninput="calcPaystubNet()"
-          style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;padding:14px;width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--green);background:var(--card);outline:none">
+          style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;padding:14px 14px 14px 36px;width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--green);background:var(--card);outline:none">
       </div>
     </div>
 
@@ -1031,7 +1031,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
       <label>Net pay ($) <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink3)">— auto-calculated, editable</span></label>
       <div class="amount-prefix">
         <input type="number" id="paystub-net" inputmode="decimal" placeholder="0.00" step="0.01" min="0" onchange="paystubNetDirty=true"
-          style="font-family:'DM Mono',monospace;font-size:24px;font-weight:700;padding:14px;width:100%;border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);color:var(--green);background:var(--card);outline:none">
+          style="font-family:'DM Mono',monospace;font-size:24px;font-weight:700;padding:14px 14px 14px 36px;width:100%;border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);color:var(--green);background:var(--card);outline:none">
       </div>
     </div>
 
@@ -5013,12 +5013,13 @@ function totalDebtSummary(){
 // ── Assets (Gold, Silver, Cash Savings) ──────────────────────────────────────
 const ASSETS_KEY   = 'ledger_assets';
 const FX_CACHE     = 'ledger_fx_cache';
-let fxRates = { IQD: 0, VND: 0, fetchedAt: null };
+let fxRates = { IQD: 0, VND: 0, IDR: 0, fetchedAt: null };
 
 // Hardcoded fallback rates — updated periodically, used if API fails
 // IQD: ~1,310 per USD (official rate, stable for years)
 // VND: ~25,450 per USD (approximate mid-market)
-const FX_FALLBACK = { IQD: 1310, VND: 25450 };
+// IDR: ~16,300 per USD (approximate mid-market)
+const FX_FALLBACK = { IQD: 1310, VND: 25450, IDR: 16300 };
 
 async function fetchFXRates(){
   // Use fallback immediately if no cache
@@ -5054,8 +5055,9 @@ async function fetchFXRates(){
         // jsdelivr uses lowercase
         const IQD = rates.IQD || rates.iqd;
         const VND = rates.VND || rates.vnd;
+        const IDR = rates.IDR || rates.idr;
         if(IQD > 100 && VND > 1000){
-          fxRates = { IQD, VND, fetchedAt: new Date().toISOString(), source: 'live' };
+          fxRates = { IQD, VND, IDR: IDR||FX_FALLBACK.IDR, fetchedAt: new Date().toISOString(), source: 'live' };
           localStorage.setItem(FX_CACHE, JSON.stringify(fxRates));
           return fxRates;
         }
@@ -5068,22 +5070,24 @@ async function fetchFXRates(){
 function loadFXRates(){
   try {
     const cached = JSON.parse(localStorage.getItem(FX_CACHE) || 'null');
-    if(cached && cached.IQD > 0) fxRates = cached;
+    if(cached && cached.IQD > 0) fxRates = { ...FX_FALLBACK, ...cached };
     else fxRates = { ...FX_FALLBACK, fetchedAt: null, source: 'fallback' };
   } catch(e){ fxRates = { ...FX_FALLBACK, fetchedAt: null, source: 'fallback' }; }
 }
 const METALS_CACHE  = 'ledger_metals_cache';
+const CRYPTO_CACHE  = 'ledger_crypto_cache';
 let assetsData  = { gold:0, silver:0, savings:0, k401:0,
-                    iqd:0, vnd:0,
+                    btc:0, eth:0, otherCrypto:0, otherCryptoName:'',
                     realEstate:0, realEstateName:'',
                     vehicle1:0, vehicle1Name:'', vehicle2:0, vehicle2Name:'',
                     updatedAt:null };
 let metalPrices = { gold:0, silver:0, fetchedAt:null };
+let cryptoPrices = { btc:0, eth:0, fetchedAt:null };
 
 function loadAssets(){
   try { assetsData  = { ...assetsData, ...JSON.parse(localStorage.getItem(ASSETS_KEY)||'{}') }; } catch(e){}
   try { metalPrices = JSON.parse(localStorage.getItem(METALS_CACHE)||'{"gold":0,"silver":0,"fetchedAt":null}'); } catch(e){}
-  loadFXRates();
+  try { cryptoPrices = JSON.parse(localStorage.getItem(CRYPTO_CACHE)||'{"btc":0,"eth":0,"fetchedAt":null}'); } catch(e){}
   dbGet('assets').then(val=>{
     if(val){ try{ assetsData={...assetsData,...JSON.parse(val)}; localStorage.setItem(ASSETS_KEY,JSON.stringify(assetsData)); renderHome(); }catch(e){} }
   });
@@ -5180,6 +5184,48 @@ function metalPricesStale(){
     (Date.now() - new Date(metalPrices.fetchedAt).getTime()) > 24*60*60*1000;
 }
 
+async function fetchCryptoPrices(){
+  // Return cache if fresh (5 min)
+  if(cryptoPrices.fetchedAt && cryptoPrices.btc > 1000 &&
+    (Date.now() - new Date(cryptoPrices.fetchedAt).getTime()) < 5*60*1000){
+    return cryptoPrices;
+  }
+  try {
+    const r = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd',
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if(r.ok){
+      const d = await r.json();
+      const btc = d?.bitcoin?.usd;
+      const eth = d?.ethereum?.usd;
+      if(btc > 1000 && eth > 10){
+        cryptoPrices = { btc, eth, fetchedAt: new Date().toISOString(), source: 'CoinGecko' };
+        localStorage.setItem(CRYPTO_CACHE, JSON.stringify(cryptoPrices));
+        return cryptoPrices;
+      }
+    }
+  } catch(e){}
+  // Fallback — try proxy
+  try {
+    const r = await fetch(
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd'),
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if(r.ok){
+      const d = await r.json();
+      const btc = d?.bitcoin?.usd;
+      const eth = d?.ethereum?.usd;
+      if(btc > 1000){
+        cryptoPrices = { btc, eth, fetchedAt: new Date().toISOString(), source: 'CoinGecko (proxy)' };
+        localStorage.setItem(CRYPTO_CACHE, JSON.stringify(cryptoPrices));
+      }
+    }
+  } catch(e){}
+  return cryptoPrices;
+}
+
+
 function assetsNetValue(){
   const goldVal    = (assetsData.gold   || 0) * (metalPrices.gold   || 0);
   const silverVal  = (assetsData.silver || 0) * (metalPrices.silver || 0);
@@ -5188,17 +5234,20 @@ function assetsNetValue(){
   const k401contrib= assetsData.k401contrib|| 0;
   const k401match  = assetsData.k401match  || 0;
   const k401ytd    = assetsData.k401ytd    || 0;
-  // Foreign currency held as physical cash. fxRates.IQD / fxRates.VND are quoted as
-  // units-per-USD (e.g. 1 USD = 1,310 IQD), so the USD value of a stash is qty ÷ rate.
-  const iqdVal     = (fxRates.IQD > 0) ? (assetsData.iqd || 0) / fxRates.IQD : 0;
-  const vndVal     = (fxRates.VND > 0) ? (assetsData.vnd || 0) / fxRates.VND : 0;
+  const iqdVal     = (assetsData.iqd||0) / (fxRates.IQD||FX_FALLBACK.IQD);
+  const vndVal     = (assetsData.vnd||0) / (fxRates.VND||FX_FALLBACK.VND);
+  const idrVal     = (assetsData.idr||0) / (fxRates.IDR||FX_FALLBACK.IDR);
+  // Crypto
+  const btcVal     = (assetsData.btc || 0) * (cryptoPrices.btc || 0);
+  const ethVal     = (assetsData.eth || 0) * (cryptoPrices.eth || 0);
+  const otherCrypto= assetsData.otherCrypto || 0;
   // Real estate & vehicles
   const realEstate = assetsData.realEstate  || 0;
   const vehicles   = (assetsData.vehicle1   || 0) + (assetsData.vehicle2 || 0);
-  const total = goldVal + silverVal + savings + k401 + iqdVal + vndVal +
-                realEstate + vehicles;
+  const total = goldVal + silverVal + savings + k401 + iqdVal + vndVal + idrVal +
+                btcVal + ethVal + otherCrypto + realEstate + vehicles;
   return { goldVal, silverVal, savings, k401, k401contrib, k401match, k401ytd,
-           iqdVal, vndVal, realEstate, vehicles, total };
+           iqdVal, vndVal, idrVal, btcVal, ethVal, otherCrypto, realEstate, vehicles, total };
 }
 
 async function openAssetsSheet(){
@@ -5209,8 +5258,9 @@ async function openAssetsSheet(){
   if(document.getElementById('asset-401k-contrib')) document.getElementById('asset-401k-contrib').value = assetsData.k401contrib || '';
   if(document.getElementById('asset-401k-match'))   document.getElementById('asset-401k-match').value   = assetsData.k401match   || '';
   if(document.getElementById('asset-401k-ytd'))     document.getElementById('asset-401k-ytd').value     = assetsData.k401ytd     || '';
-  document.getElementById('asset-iqd') && (document.getElementById('asset-iqd').value = assetsData.iqd || '');
-  document.getElementById('asset-vnd') && (document.getElementById('asset-vnd').value = assetsData.vnd || '');
+  document.getElementById('asset-iqd') && (document.getElementById('asset-iqd').value = assetsData.iqd||'');
+  document.getElementById('asset-vnd') && (document.getElementById('asset-vnd').value = assetsData.vnd||'');
+  document.getElementById('asset-idr') && (document.getElementById('asset-idr').value = assetsData.idr||'');
 
   document.getElementById('assets-last-updated').textContent = assetsData.updatedAt
     ? new Date(assetsData.updatedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
@@ -5239,6 +5289,10 @@ async function openAssetsSheet(){
         (s>0?' → <strong style="color:#708090">$'+(s*prices.silver).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</strong>':'');
     }
   }).catch(()=>{});
+  document.getElementById('asset-btc').value              = assetsData.btc              || '';
+  document.getElementById('asset-eth').value              = assetsData.eth              || '';
+  document.getElementById('asset-other-crypto').value     = assetsData.otherCrypto      || '';
+  document.getElementById('asset-other-crypto-name').value= assetsData.otherCryptoName  || '';
   document.getElementById('asset-real-estate').value      = assetsData.realEstate       || '';
   document.getElementById('asset-real-estate-name').value = assetsData.realEstateName   || '';
   document.getElementById('asset-vehicle1').value         = assetsData.vehicle1         || '';
@@ -5253,21 +5307,20 @@ async function openAssetsSheet(){
   document.getElementById('assets-overlay').classList.add('open');
   document.getElementById('assets-sheet').classList.add('open');
 
-  // Fetch foreign-currency (IQD / VND) exchange rates
-  const fxPreviewEl = document.getElementById('fx-price-preview');
-  if(fxPreviewEl) fxPreviewEl.innerHTML = '<span style="color:var(--amber)">⏳ Fetching live exchange rates…</span>';
-  fetchFXRates().then(fx=>{
-    if(!fxPreviewEl || !(fx.IQD>0)) return;
-    const iqdVal = fx.IQD ? (assetsData.iqd||0)/fx.IQD : 0;
-    const vndVal = fx.VND ? (assetsData.vnd||0)/fx.VND : 0;
-    const srcLabel = fx.source==='live' ? 'live rate' : 'estimated rate';
-    const srcColor = fx.source==='live' ? 'var(--green)' : 'var(--amber)';
-    fxPreviewEl.innerHTML =
-      '<strong>Exchange rates</strong> · <span style="color:'+srcColor+'">'+srcLabel+'</span><br>' +
-      '🇮🇶 Dinar: <strong>$1 = '+Math.round(fx.IQD).toLocaleString()+' IQD</strong>' +
-      (assetsData.iqd>0 ? ' → <strong style="color:#047857">$'+iqdVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</strong>' : '') + '<br>' +
-      '🇻🇳 Dong: <strong>$1 = '+Math.round(fx.VND).toLocaleString()+' VND</strong>' +
-      (assetsData.vnd>0 ? ' → <strong style="color:#b91c1c">$'+vndVal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</strong>' : '');
+  // Fetch crypto prices
+  const cryptoPreviewEl = document.getElementById('crypto-price-preview');
+  if(cryptoPreviewEl) cryptoPreviewEl.innerHTML = '<span style="color:var(--amber)">⏳ Fetching live prices…</span>';
+  fetchCryptoPrices().then(p=>{
+    if(cryptoPreviewEl && p.btc > 1000){
+      const btcVal = (assetsData.btc||0) * p.btc;
+      const ethVal = (assetsData.eth||0) * p.eth;
+      cryptoPreviewEl.innerHTML =
+        '<strong>Live crypto prices</strong> · <span style="color:var(--green)">' + (p.source||'CoinGecko') + '</span><br>' +
+        '₿ Bitcoin: <strong>$' + Math.round(p.btc).toLocaleString() + '</strong>' +
+        (assetsData.btc>0 ? ' → <strong style="color:#f7931a">$' + Math.round(btcVal).toLocaleString() + '</strong>' : '') + '<br>' +
+        'Ξ Ethereum: <strong>$' + Math.round(p.eth).toLocaleString() + '</strong>' +
+        (assetsData.eth>0 ? ' → <strong style="color:#627eea">$' + Math.round(ethVal).toLocaleString() + '</strong>' : '');
+    }
   }).catch(()=>{});
 }
 
@@ -5317,6 +5370,11 @@ async function saveAssets(){
     k401ytd:     parseFloat(document.getElementById('asset-401k-ytd')?.value)     || 0,
     iqd: parseFloat(document.getElementById('asset-iqd')?.value) || 0,
     vnd: parseFloat(document.getElementById('asset-vnd')?.value) || 0,
+    idr: parseFloat(document.getElementById('asset-idr')?.value) || 0,
+    btc:             parseFloat(document.getElementById('asset-btc').value)               || 0,
+    eth:             parseFloat(document.getElementById('asset-eth').value)               || 0,
+    otherCrypto:     parseFloat(document.getElementById('asset-other-crypto').value)      || 0,
+    otherCryptoName: document.getElementById('asset-other-crypto-name').value.trim()      || '',
     realEstate:      parseFloat(document.getElementById('asset-real-estate').value)       || 0,
     realEstateName:  document.getElementById('asset-real-estate-name').value.trim()       || '',
     vehicle1:        parseFloat(document.getElementById('asset-vehicle1').value)          || 0,
@@ -5328,7 +5386,7 @@ async function saveAssets(){
   localStorage.setItem(ASSETS_KEY, JSON.stringify(assetsData));
   dbSet('assets', assetsData);
   closeAssetsSheet();
-  await Promise.all([fetchMetalPrices(), fetchFXRates()]);
+  await Promise.all([fetchMetalPrices(), fetchCryptoPrices()]);
   showToast('Assets saved');
   renderHome();
 }
@@ -5340,122 +5398,131 @@ function renderAssetsSection(){
   const gPrice = metalPrices.gold   || 0;
   const sPrice = metalPrices.silver || 0;
   const hasData = assetsData.gold>0 || assetsData.silver>0 || assetsData.savings>0 ||
-                  assetsData.k401>0 || assetsData.iqd>0 || assetsData.vnd>0 ||
+                  assetsData.k401>0 || assetsData.iqd>0 || assetsData.vnd>0 || assetsData.idr>0 ||
+                  assetsData.btc>0 || assetsData.eth>0 || assetsData.otherCrypto>0 ||
                   assetsData.realEstate>0 || assetsData.vehicle1>0 || assetsData.vehicle2>0;
 
   if(!hasData){
     el.innerHTML = `<div class="dash-card" style="cursor:pointer" onclick="openAssetsSheet()">
-      <div style="font-size:14px;font-weight:500;color:var(--ink3)">Tap Edit to add your assets — gold, currency, real estate, vehicles & more</div>
+      <div style="font-size:14px;font-weight:500;color:var(--ink3)">Tap Edit to add your assets — gold, crypto, real estate, vehicles & more</div>
     </div>`;
     return;
   }
 
-  const rows = [];
-  if(assetsData.gold>0) rows.push(`
+  // ── Holdings rows (everything except 401k) ────────────────────────────────
+  const holdingRows = [];
+  let holdingsTotal = 0;
+
+  if(assetsData.gold>0){ const v=assetsData.gold*(gPrice||0); holdingsTotal+=v; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#fef9c3;color:#b8860b">🥇</div>
-      <div class="asset-body">
-        <div class="asset-name">Gold</div>
-        <div class="asset-meta">${assetsData.gold} oz t${gPrice?' · $'+gPrice.toFixed(2)+'/oz':''}</div>
-      </div>
-      <div class="asset-val">${gPrice?fmt(assetsData.gold*gPrice):'—'}</div>
-    </div>`);
-  if(assetsData.silver>0) rows.push(`
+      <div class="asset-body"><div class="asset-name">Gold</div><div class="asset-meta">${assetsData.gold} oz t${gPrice?' · $'+gPrice.toFixed(2)+'/oz':''}</div></div>
+      <div class="asset-val">${gPrice?fmt(v):'—'}</div>
+    </div>`); }
+  if(assetsData.silver>0){ const v=assetsData.silver*(sPrice||0); holdingsTotal+=v; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#f1f5f9;color:#708090">🥈</div>
-      <div class="asset-body">
-        <div class="asset-name">Silver</div>
-        <div class="asset-meta">${assetsData.silver} oz t${sPrice?' · $'+sPrice.toFixed(2)+'/oz':''}</div>
-      </div>
-      <div class="asset-val">${sPrice?fmt(assetsData.silver*sPrice):'—'}</div>
-    </div>`);
-  // Foreign currency (physical cash held)
-  if(assetsData.iqd>0){
-    const iqdRate = fxRates.IQD || 0;
-    const iqdPerUnit = iqdRate ? 1/iqdRate : 0;
-    rows.push(`<div class="asset-row">
-      <div class="asset-icon" style="background:#ecfdf5;color:#047857">🇮🇶</div>
-      <div class="asset-body">
-        <div class="asset-name">Iraqi Dinar</div>
-        <div class="asset-meta">${assetsData.iqd.toLocaleString()} IQD${iqdPerUnit?' · $'+iqdPerUnit.toFixed(iqdPerUnit<0.001?7:4)+'/unit':''}</div>
-      </div>
-      <div class="asset-val" style="color:#047857">${iqdRate?fmt(assetsData.iqd/iqdRate):'—'}</div>
-    </div>`);
-  }
-  if(assetsData.vnd>0){
-    const vndRate = fxRates.VND || 0;
-    const vndPerUnit = vndRate ? 1/vndRate : 0;
-    rows.push(`<div class="asset-row">
-      <div class="asset-icon" style="background:#fef2f2;color:#b91c1c">🇻🇳</div>
-      <div class="asset-body">
-        <div class="asset-name">Vietnamese Dong</div>
-        <div class="asset-meta">${assetsData.vnd.toLocaleString()} VND${vndPerUnit?' · $'+vndPerUnit.toFixed(vndPerUnit<0.001?7:4)+'/unit':''}</div>
-      </div>
-      <div class="asset-val" style="color:#b91c1c">${vndRate?fmt(assetsData.vnd/vndRate):'—'}</div>
-    </div>`);
-  }
-  if(assetsData.savings>0) rows.push(`
+      <div class="asset-body"><div class="asset-name">Silver</div><div class="asset-meta">${assetsData.silver} oz t${sPrice?' · $'+sPrice.toFixed(2)+'/oz':''}</div></div>
+      <div class="asset-val">${sPrice?fmt(v):'—'}</div>
+    </div>`); }
+  if(assetsData.btc>0){ const btcP=cryptoPrices.btc||0; const v=assetsData.btc*btcP; holdingsTotal+=v; holdingRows.push(`
+    <div class="asset-row">
+      <div class="asset-icon" style="background:#fff7ed;color:#f7931a">₿</div>
+      <div class="asset-body"><div class="asset-name">Bitcoin</div><div class="asset-meta">${assetsData.btc} BTC${btcP?' · $'+Math.round(btcP).toLocaleString()+'/BTC':''}</div></div>
+      <div class="asset-val" style="color:#f7931a">${btcP?fmt(v):'—'}</div>
+    </div>`); }
+  if(assetsData.eth>0){ const ethP=cryptoPrices.eth||0; const v=assetsData.eth*ethP; holdingsTotal+=v; holdingRows.push(`
+    <div class="asset-row">
+      <div class="asset-icon" style="background:#eef2ff;color:#627eea">Ξ</div>
+      <div class="asset-body"><div class="asset-name">Ethereum</div><div class="asset-meta">${assetsData.eth} ETH${ethP?' · $'+Math.round(ethP).toLocaleString()+'/ETH':''}</div></div>
+      <div class="asset-val" style="color:#627eea">${ethP?fmt(v):'—'}</div>
+    </div>`); }
+  if(assetsData.otherCrypto>0){ holdingsTotal+=assetsData.otherCrypto; holdingRows.push(`
+    <div class="asset-row">
+      <div class="asset-icon" style="background:#f0fdf4;color:#16a34a">🪙</div>
+      <div class="asset-body"><div class="asset-name">${assetsData.otherCryptoName||'Other crypto'}</div><div class="asset-meta">Manual value</div></div>
+      <div class="asset-val">${fmt(assetsData.otherCrypto)}</div>
+    </div>`); }
+  if(assetsData.savings>0){ holdingsTotal+=assetsData.savings; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:var(--green-bg);color:var(--green)">💰</div>
-      <div class="asset-body">
-        <div class="asset-name">Cash savings</div>
-        <div class="asset-meta">Savings account</div>
-      </div>
+      <div class="asset-body"><div class="asset-name">Cash savings</div><div class="asset-meta">Savings account</div></div>
       <div class="asset-val">${fmt(assetsData.savings)}</div>
-    </div>`);
-  if(assetsData.k401>0) rows.push(`
+    </div>`); }
+  // Foreign currency holdings
+  if(assetsData.iqd>0){ const v=(assetsData.iqd)/(fxRates.IQD||FX_FALLBACK.IQD); holdingsTotal+=v; holdingRows.push(`
     <div class="asset-row">
-      <div class="asset-icon" style="background:#f3e8ff;color:#7c3aed">🏛</div>
-      <div class="asset-body">
-        <div class="asset-name">401k</div>
-        <div class="asset-meta">DMEA retirement plan · pre-tax</div>
-      </div>
-      <div class="asset-val" style="color:#7c3aed">${fmt(assetsData.k401)}</div>
-    </div>`);
-  // Real estate
-  if(assetsData.realEstate>0) rows.push(`
+      <div class="asset-icon" style="background:#fef3c7;color:#92400e">🇮🇶</div>
+      <div class="asset-body"><div class="asset-name">Iraqi Dinar</div><div class="asset-meta">${assetsData.iqd.toLocaleString()} IQD · ~${(fxRates.IQD||FX_FALLBACK.IQD).toLocaleString()} IQD/USD</div></div>
+      <div class="asset-val">${fmt(v)}</div>
+    </div>`); }
+  if(assetsData.vnd>0){ const v=(assetsData.vnd)/(fxRates.VND||FX_FALLBACK.VND); holdingsTotal+=v; holdingRows.push(`
+    <div class="asset-row">
+      <div class="asset-icon" style="background:#fce7f3;color:#9d174d">🇻🇳</div>
+      <div class="asset-body"><div class="asset-name">Vietnamese Dong</div><div class="asset-meta">${assetsData.vnd.toLocaleString()} VND · ~${(fxRates.VND||FX_FALLBACK.VND).toLocaleString()} VND/USD</div></div>
+      <div class="asset-val">${fmt(v)}</div>
+    </div>`); }
+  if(assetsData.idr>0){ const v=(assetsData.idr)/(fxRates.IDR||FX_FALLBACK.IDR); holdingsTotal+=v; holdingRows.push(`
+    <div class="asset-row">
+      <div class="asset-icon" style="background:#ecfdf5;color:#065f46">🇮🇩</div>
+      <div class="asset-body"><div class="asset-name">Indonesian Rupiah</div><div class="asset-meta">${assetsData.idr.toLocaleString()} IDR · ~${(fxRates.IDR||FX_FALLBACK.IDR).toLocaleString()} IDR/USD</div></div>
+      <div class="asset-val">${fmt(v)}</div>
+    </div>`); }
+  if(assetsData.realEstate>0){ holdingsTotal+=assetsData.realEstate; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#eff6ff;color:#2563eb">🏠</div>
-      <div class="asset-body">
-        <div class="asset-name">${assetsData.realEstateName||'Real estate'}</div>
-        <div class="asset-meta">Property value · manual estimate</div>
-      </div>
+      <div class="asset-body"><div class="asset-name">${assetsData.realEstateName||'Real estate'}</div><div class="asset-meta">Property value · manual estimate</div></div>
       <div class="asset-val" style="color:#2563eb">${fmt(assetsData.realEstate)}</div>
-    </div>`);
-  // Vehicles
-  if(assetsData.vehicle1>0) rows.push(`
+    </div>`); }
+  if(assetsData.vehicle1>0){ holdingsTotal+=assetsData.vehicle1; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#f8fafc;color:#475569">🚗</div>
-      <div class="asset-body">
-        <div class="asset-name">${assetsData.vehicle1Name||'Vehicle 1'}</div>
-        <div class="asset-meta">Estimated value</div>
-      </div>
+      <div class="asset-body"><div class="asset-name">${assetsData.vehicle1Name||'Vehicle 1'}</div><div class="asset-meta">Estimated value</div></div>
       <div class="asset-val">${fmt(assetsData.vehicle1)}</div>
-    </div>`);
-  if(assetsData.vehicle2>0) rows.push(`
+    </div>`); }
+  if(assetsData.vehicle2>0){ holdingsTotal+=assetsData.vehicle2; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#f8fafc;color:#475569">🚙</div>
-      <div class="asset-body">
-        <div class="asset-name">${assetsData.vehicle2Name||'Vehicle 2'}</div>
-        <div class="asset-meta">Estimated value</div>
-      </div>
+      <div class="asset-body"><div class="asset-name">${assetsData.vehicle2Name||'Vehicle 2'}</div><div class="asset-meta">Estimated value</div></div>
       <div class="asset-val">${fmt(assetsData.vehicle2)}</div>
-    </div>`);
+    </div>`); }
 
-  const priceAge = metalPrices.fetchedAt
-    ? Math.round((Date.now()-new Date(metalPrices.fetchedAt).getTime())/60000)
+  // Only show price freshness if we have assets that actually use live prices
+  const hasLivePricedAssets = assetsData.gold>0 || assetsData.silver>0 ||
+                               assetsData.btc>0  || assetsData.eth>0;
+  const priceAgeMs = hasLivePricedAssets && metalPrices.fetchedAt
+    ? Date.now() - new Date(metalPrices.fetchedAt).getTime()
     : null;
-  const priceAgeLine = priceAge===null ? ''
+  const priceAge = priceAgeMs !== null ? Math.round(priceAgeMs/60000) : null;
+  // Don't show a stale warning if the cached timestamp is ancient (>7 days) — just stay silent
+  const priceAgeLine = priceAge===null || priceAgeMs > 7*24*60*60*1000 ? ''
     : metalPricesStale()
       ? `<div style="font-size:11px;color:var(--red);font-weight:600;margin-top:6px;text-align:right">⚠️ Couldn't get a fresh price — last known from ${priceAge} min ago</div>`
       : `<div style="font-size:11px;color:var(--ink3);margin-top:6px;text-align:right">Prices updated ${priceAge} min ago</div>`;
 
+  // ── Retirement row (401k only) ────────────────────────────────────────────
+  const retirementRow = assetsData.k401>0 ? `
+    <div class="asset-row">
+      <div class="asset-icon" style="background:#f3e8ff;color:#7c3aed">🏛</div>
+      <div class="asset-body"><div class="asset-name">401k</div><div class="asset-meta">DMEA retirement plan · pre-tax</div></div>
+      <div class="asset-val" style="color:#7c3aed">${fmt(assetsData.k401)}</div>
+    </div>` : '';
+
   el.innerHTML = `<div class="dash-card">
-    ${rows.join('')}
-    <div class="asset-total-row">
-      <span class="asset-total-label">Total assets</span>
-      <span class="asset-total-val">${fmt(av.total)}</span>
-    </div>
+    ${holdingRows.length ? `
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase;margin-bottom:6px">Holdings</div>
+      ${holdingRows.join('')}
+      <div class="asset-total-row" style="margin-bottom:${assetsData.k401>0?'14':'0'}px">
+        <span class="asset-total-label">Holdings total</span>
+        <span class="asset-total-val">${fmt(holdingsTotal)}</span>
+      </div>` : ''}
+    ${retirementRow ? `
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;${holdingRows.length?'padding-top:4px;border-top:1px solid var(--border)':''}">Retirement</div>
+      ${retirementRow}
+      <div class="asset-total-row">
+        <span class="asset-total-label">Retirement total</span>
+        <span class="asset-total-val" style="color:#7c3aed">${fmt(assetsData.k401)}</span>
+      </div>` : ''}
     ${priceAgeLine}
   </div>`;
 }
@@ -5473,17 +5540,17 @@ function renderAssetsTab(){
   if(nwEl) nwEl.innerHTML =
     '<div class="dash-card">' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + "Checking" + '</div><div class="debt-stat-val" style="color:var(--green)">' + fmt(chkBal) + '</div></div>' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + ("Savings account"||'Savings') + '</div><div class="debt-stat-val" style="color:var(--blue)">' + fmt(savingsData.bal||0) + '</div></div>' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + "Assets" + '</div><div class="debt-stat-val" style="color:#b8860b">' + fmt(av.total) + '</div></div>' +
-    '<div class="debt-stat"><div class="debt-stat-label">' + "CC Debt" + '</div><div class="debt-stat-val red">' + fmt(totalDebt) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">Checking</div><div class="debt-stat-val" style="color:var(--green)">' + fmt(chkBal) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">Savings</div><div class="debt-stat-val" style="color:var(--blue)">' + fmt(savingsData.bal||0) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">Assets</div><div class="debt-stat-val" style="color:#b8860b">' + fmt(av.total) + '</div></div>' +
+    '<div class="debt-stat"><div class="debt-stat-label">CC Debt</div><div class="debt-stat-val red">' + fmt(totalDebt) + '</div></div>' +
     '</div>' +
     '<div style="background:var(--off);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">' +
-    '<span style="font-size:12px;font-weight:600;color:var(--ink2)">' + "Total assets" + '</span>' +
+    '<span style="font-size:12px;font-weight:600;color:var(--ink2)">Total assets</span>' +
     '<span style="font-size:15px;font-weight:700;font-family:DM Mono,monospace;color:var(--green)">' + fmt(totalAssets) + '</span>' +
     '</div>' +
     '<div style="background:' + (netWorth>=0?'var(--green-bg)':'var(--red-bg)') + ';border:1px solid ' + (netWorth>=0?'var(--green-mid)':'var(--red-mid)') + ';border-radius:var(--radius-sm);padding:12px 16px;display:flex;justify-content:space-between;align-items:center">' +
-    '<span style="font-size:14px;font-weight:600;color:' + (netWorth>=0?'var(--green)':'var(--red)') + '">' + "Net worth" + '</span>' +
+    '<span style="font-size:14px;font-weight:600;color:' + (netWorth>=0?'var(--green)':'var(--red)') + '">Net worth</span>' +
     '<span style="font-size:26px;font-weight:700;font-family:DM Mono,monospace;color:' + (netWorth>=0?'var(--green)':'var(--red)') + ';letter-spacing:-.02em">' + fmt(netWorth) + '</span>' +
     '</div></div>';
 
@@ -6417,10 +6484,6 @@ setTimeout(checkFirstLaunch, 0);
 // so calling this on every visibility-return is safe: it's a no-op fetch if the cache
 // is still fresh, and only actually hits the network if it's stale.
 function refreshMetalPricesAndRenderHome(){
-  // Refresh foreign-currency rates too — respects its own 60-min cache internally.
-  fetchFXRates().then(function(){
-    try { if(document.getElementById('assets-main')) renderAssetsSection(); } catch(e){}
-  }).catch(function(){});
   fetchMetalPrices().then(function(){
     try {
       if(document.getElementById('assets-main')) renderAssetsSection();
@@ -6439,6 +6502,11 @@ function refreshMetalPricesAndRenderHome(){
 }
 
 // 3. Background price fetches — fire and forget, never block
+setTimeout(function(){
+  fetchCryptoPrices().then(function(){
+    try { if(document.getElementById('assets-main')) renderAssetsSection(); } catch(e){}
+  }).catch(function(){});
+}, 1500);
 setTimeout(refreshMetalPricesAndRenderHome, 1000);
 
 setTimeout(function(){
@@ -6568,26 +6636,39 @@ setTimeout(function(){
     💡 <strong>DMEA contributes a flat amount plus a match each check</strong> — calculated automatically from your logged paystubs, no action needed here. This balance field is the one thing you still update by hand, from your plan statement.
   </div>
 
-  <!-- Foreign currency (physical cash held) -->
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Foreign currency</div>
-  <div style="background:var(--off);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--ink3);line-height:1.6" id="fx-price-preview">
-    Open Edit to fetch live exchange rates…
+  <!-- Crypto -->
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Cryptocurrency</div>
+  <div style="background:var(--off);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--ink3);line-height:1.6" id="crypto-price-preview">
+    Open Edit to fetch live prices…
   </div>
-  <div class="field-row" style="margin-bottom:8px">
+  <div class="field-row" style="margin-bottom:12px">
     <div class="field" style="margin-bottom:0">
-      <label>Iraqi Dinar (IQD)</label>
-      <input type="number" id="asset-iqd" inputmode="decimal" placeholder="0" step="1000" min="0"
-        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#047857;background:var(--card);outline:none;width:100%">
-      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Number of dinar you hold</div>
+      <label>Bitcoin (BTC)</label>
+      <input type="number" id="asset-btc" inputmode="decimal" placeholder="0.00" step="0.00001" min="0"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#f7931a;background:var(--card);outline:none;width:100%">
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Enter amount in BTC</div>
     </div>
     <div class="field" style="margin-bottom:0">
-      <label>Vietnamese Dong (VND)</label>
-      <input type="number" id="asset-vnd" inputmode="decimal" placeholder="0" step="1000" min="0"
-        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#b91c1c;background:var(--card);outline:none;width:100%">
-      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Number of dong you hold</div>
+      <label>Ethereum (ETH)</label>
+      <input type="number" id="asset-eth" inputmode="decimal" placeholder="0.00" step="0.001" min="0"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:16px;color:#627eea;background:var(--card);outline:none;width:100%">
+      <div style="font-size:11px;color:var(--ink3);margin-top:4px">Enter amount in ETH</div>
     </div>
   </div>
-  <div style="font-size:11px;color:var(--ink3);margin-bottom:16px">Enter the face amount of physical cash you hold — the app fetches the live USD exchange rate automatically, same as gold and silver.</div>
+  <div class="field-row" style="margin-bottom:16px">
+    <div class="field" style="margin-bottom:0">
+      <label>Other crypto name</label>
+      <input type="text" id="asset-other-crypto-name" placeholder="e.g. Solana, XRP…"
+        style="padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--card);outline:none;width:100%">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Value ($)</label>
+      <div class="amount-prefix">
+        <input type="number" id="asset-other-crypto" inputmode="decimal" placeholder="0.00" step="0.01" min="0"
+          style="font-family:'DM Mono',monospace;font-size:16px;padding:13px 14px 13px 30px;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--green);background:var(--card);outline:none;width:100%">
+      </div>
+    </div>
+  </div>
 
   <!-- Real estate -->
   <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:4px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Real estate</div>
@@ -6635,6 +6716,28 @@ setTimeout(function(){
           style="font-family:'DM Mono',monospace;font-size:16px;padding:13px 14px 13px 30px;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--ink);background:var(--card);outline:none;width:100%">
       </div>
     </div>
+  </div>
+
+  <!-- Foreign Currency section -->
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)">Foreign Currency</div>
+  <div style="font-size:12px;color:var(--ink3);margin-bottom:12px">Enter amounts in the foreign currency — converted to USD automatically</div>
+
+  <div class="field-row">
+    <div class="field">
+      <label>🇮🇶 Iraqi Dinar (IQD)</label>
+      <input type="number" id="asset-iqd" inputmode="decimal" placeholder="0" step="1000" min="0"
+        style="font-family:'DM Mono',monospace;font-size:16px;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--ink);background:var(--card);outline:none;width:100%">
+    </div>
+    <div class="field">
+      <label>🇻🇳 Vietnamese Dong (VND)</label>
+      <input type="number" id="asset-vnd" inputmode="decimal" placeholder="0" step="100000" min="0"
+        style="font-family:'DM Mono',monospace;font-size:16px;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--ink);background:var(--card);outline:none;width:100%">
+    </div>
+  </div>
+  <div class="field">
+    <label>🇮🇩 Indonesian Rupiah (IDR)</label>
+    <input type="number" id="asset-idr" inputmode="decimal" placeholder="0" step="100000" min="0"
+      style="font-family:'DM Mono',monospace;font-size:16px;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--ink);background:var(--card);outline:none;width:100%">
   </div>
 
   <div style="font-size:12px;color:var(--ink3);margin-bottom:18px">Last updated: <span id="assets-last-updated">never</span></div>
@@ -6811,4 +6914,3 @@ setTimeout(function(){
 </div>
 
 </html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
