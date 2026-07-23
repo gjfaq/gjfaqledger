@@ -376,6 +376,28 @@ body{font-family:'DM Sans',system-ui,sans-serif;min-height:100%;padding-bottom:9
   overflow:hidden;
   margin-bottom:0;
 }
+.slim-hero{
+  position:relative;
+  width:100%;
+  height:88px;
+  background:url('https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=900&q=80&fit=crop&crop=center') center 40%/cover no-repeat;
+  overflow:hidden;
+  margin-bottom:0;
+  flex-shrink:0;
+}
+.slim-hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(0,40,20,.25) 0%,rgba(0,25,12,.65) 100%);
+}
+.slim-hero-title{
+  position:relative;z-index:1;
+  padding:0 16px;
+  height:100%;
+  display:flex;align-items:flex-end;
+  padding-bottom:14px;
+  font-size:22px;font-weight:700;color:#fff;letter-spacing:-.02em;
+  font-family:'DM Sans',sans-serif;
+}
 .hero-overlay{
   position:absolute;inset:0;
   background:linear-gradient(
@@ -704,6 +726,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- ENTRIES -->
 <div class="screen app" id="screen-entries">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Entries</div></div>
   <div class="search-wrap">
     <div class="search-icon">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999990" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -766,6 +789,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- DEBT PAYOFF PLANNER -->
 <div class="screen app" id="screen-planner">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Planner</div></div>
   <div class="section-label" style="margin-top:4px">Debt payoff planner</div>
   <div class="planner-toggle">
     <button class="planner-tab active" id="planner-tab-aval" onclick="setPlannerMode('avalanche')">⚡ Avalanche<br><span style="font-size:10px;font-weight:400">Highest APR first · saves most interest</span></button>
@@ -788,6 +812,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- CASH FLOW PROJECTION -->
 <div class="screen app" id="screen-cashflow">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Cash Flow</div></div>
   <div class="section-label" style="margin-top:4px">30-day cash flow</div>
   <div id="cashflow-status"></div>
   <div class="dash-card" id="cashflow-summary" style="margin-bottom:10px"></div>
@@ -797,6 +822,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- DASHBOARD -->
 <div class="screen app" id="screen-dashboard">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Dashboard</div></div>
   <div class="section-label" style="margin-top:4px">Income vs Expenses</div>
   <div id="dash-income-expense"></div>
 
@@ -829,6 +855,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- CARDS -->
 <div class="screen app" id="screen-cards">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Cards</div></div>
   <button class="card-add-btn" onclick="openCardSheet(null)">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add a card
@@ -843,6 +870,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- IMPORT -->
 <div class="screen app" id="screen-import">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Import</div></div>
   <div class="import-hero">
     <div class="import-hero-icon" id="import-hero-icon">🏦</div>
     <div class="import-hero-title" id="import-hero-title">Import from bank</div>
@@ -1110,6 +1138,7 @@ if(localStorage.getItem('ledger_lock_enabled') === '1'){
 
 <!-- ASSETS -->
 <div class="screen app" id="screen-assets">
+  <div class="slim-hero" style="margin:-20px -16px 16px"><div class="slim-hero-overlay"></div><div class="slim-hero-title">Assets &amp; Net Worth</div></div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
     <div class="section-label" style="margin:0">Assets &amp; Net worth</div>
     <div style="display:flex;gap:8px">
@@ -1352,7 +1381,7 @@ let BILLS = [];
 
 // ── Personal seed data — pre-loaded for Dan on first launch ───────────────────
 const PERSONAL_BILLS = [
-  {desc:'Rent',cat:'Housing',day:1,amt:1400,autopay:''},
+  {desc:'Rent — Dana McDonald',cat:'Housing',day:25,amt:1400,autopay:''},
   {desc:'Progressive Insurance',cat:'Insurance',day:1,amt:170,autopay:'REI Card'},
   {desc:'Union Dues',cat:'Other',day:1,amt:130,autopay:''},
   {desc:'Spotify',cat:'Subscriptions',day:4,amt:15,autopay:'REI Card'},
@@ -2946,6 +2975,7 @@ function autoDetectCols(headers){
 function autoCategory(desc){
   const d = (desc||'').toLowerCase();
   if(/rent|mortgage|hoa/.test(d))                   return 'Housing';
+  if(/zelle.*dana|dana.*mcdona|memo post.*zelle.*dana/i.test(d)) return 'Housing'; // rent payment
   if(/grocery|safeway|walmart|kroger|albertson|king soopers|whole foods|trader joe/.test(d)) return 'Groceries';
   if(/shell|exxon|chevron|bp|circle k|maverick|gas|fuel|sinclair/.test(d)) return 'Transportation';
   if(/xcel|electric|utilities|water|sewer|natural gas|spectrum|internet/.test(d)) return 'Utilities';
@@ -6490,9 +6520,15 @@ function renderDashboard(){
   const merchantTotals = {};
   entries.filter(e=>e.type==='expense').forEach(e=>{
     const raw = (e.description||'').replace(/\[.*?\]/g,'').trim();
-    // Normalize: strip trailing city/state, card suffixes
-    const name = raw.replace(/\s+(GRAND JUNCT.*|MONTROSE.*|DENVER.*|CA|CO|NY|TX|MO|UT)\s*$/i,'')
-                    .replace(/\s+#\d+.*$/,'').replace(/\s{2,}/g,' ').trim().slice(0,30);
+    // Normalize known payees before generic cleanup
+    let name;
+    if(/zelle.*dana|dana.*mcdona|memo post.*zelle.*dana/i.test(raw)){
+      name = 'Rent — Dana McDonald';
+    } else {
+      // Normalize: strip trailing city/state, card suffixes
+      name = raw.replace(/\s+(GRAND JUNCT.*|MONTROSE.*|DENVER.*|CA|CO|NY|TX|MO|UT)\s*$/i,'')
+                .replace(/\s+#\d+.*$/,'').replace(/\s{2,}/g,' ').trim().slice(0,30);
+    }
     if(!name) return;
     if(!merchantTotals[name]) merchantTotals[name]={amt:0,count:0};
     merchantTotals[name].amt+=Number(e.amt);
