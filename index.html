@@ -5453,19 +5453,19 @@ function renderAssetsSection(){
   if(assetsData.iqd>0){ const v=(assetsData.iqd)/(fxRates.IQD||FX_FALLBACK.IQD); holdingsTotal+=v; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#fef3c7;color:#92400e">🇮🇶</div>
-      <div class="asset-body"><div class="asset-name">Iraqi Dinar</div><div class="asset-meta">${assetsData.iqd.toLocaleString()} IQD · ~${(fxRates.IQD||FX_FALLBACK.IQD).toLocaleString()} IQD/USD</div></div>
+      <div class="asset-body"><div class="asset-name">Iraqi Dinar</div><div class="asset-meta">${assetsData.iqd.toLocaleString()} IQD · ${(fxRates.IQD||FX_FALLBACK.IQD).toLocaleString()} IQD/USD</div></div>
       <div class="asset-val">${fmt(v)}</div>
     </div>`); }
   if(assetsData.vnd>0){ const v=(assetsData.vnd)/(fxRates.VND||FX_FALLBACK.VND); holdingsTotal+=v; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#fce7f3;color:#9d174d">🇻🇳</div>
-      <div class="asset-body"><div class="asset-name">Vietnamese Dong</div><div class="asset-meta">${assetsData.vnd.toLocaleString()} VND · ~${(fxRates.VND||FX_FALLBACK.VND).toLocaleString()} VND/USD</div></div>
+      <div class="asset-body"><div class="asset-name">Vietnamese Dong</div><div class="asset-meta">${assetsData.vnd.toLocaleString()} VND · ${(fxRates.VND||FX_FALLBACK.VND).toLocaleString()} VND/USD</div></div>
       <div class="asset-val">${fmt(v)}</div>
     </div>`); }
   if(assetsData.idr>0){ const v=(assetsData.idr)/(fxRates.IDR||FX_FALLBACK.IDR); holdingsTotal+=v; holdingRows.push(`
     <div class="asset-row">
       <div class="asset-icon" style="background:#ecfdf5;color:#065f46">🇮🇩</div>
-      <div class="asset-body"><div class="asset-name">Indonesian Rupiah</div><div class="asset-meta">${assetsData.idr.toLocaleString()} IDR · ~${(fxRates.IDR||FX_FALLBACK.IDR).toLocaleString()} IDR/USD</div></div>
+      <div class="asset-body"><div class="asset-name">Indonesian Rupiah</div><div class="asset-meta">${assetsData.idr.toLocaleString()} IDR · ${(fxRates.IDR||FX_FALLBACK.IDR).toLocaleString()} IDR/USD</div></div>
       <div class="asset-val">${fmt(v)}</div>
     </div>`); }
   if(assetsData.realEstate>0){ holdingsTotal+=assetsData.realEstate; holdingRows.push(`
@@ -5578,15 +5578,15 @@ function renderAssetsTab(){
         '<div class="chart-title" style="margin-bottom:10px">Allocation</div>' +
         '<div class="bar-row" style="margin-bottom:8px">' +
         '<div class="bar-row-label">Equity</div>' +
-        '<div class="bar-track"><div class="bar-fill" style="width:79%;background:#2563eb"></div></div>' +
-        '<div class="bar-val">79% · ' + fmt(av.k401*0.79) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:81.26%;background:#2563eb"></div></div>' +
+        '<div class="bar-val">81.26% · ' + fmt(av.k401*0.8126) + '</div>' +
         '</div>' +
         '<div class="bar-row">' +
         '<div class="bar-row-label">Bonds</div>' +
-        '<div class="bar-track"><div class="bar-fill" style="width:21%;background:#7c3aed"></div></div>' +
-        '<div class="bar-val">21% · ' + fmt(av.k401*0.21) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:18.74%;background:#7c3aed"></div></div>' +
+        '<div class="bar-val">18.74% · ' + fmt(av.k401*0.1874) + '</div>' +
         '</div></div>' +
-        '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Allocation split is a placeholder estimate — update to match your actual plan mix if you know it.</div>' +
+        '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Allocation from your plan portal as of Jul 22, 2026.</div>' +
         '<div style="font-size:12px;color:var(--ink3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">Balance as of ' + balanceAge + ' · Tap Edit to update</div>' +
         '</div>';
     } else {
